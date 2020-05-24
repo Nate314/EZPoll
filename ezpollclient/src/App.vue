@@ -3,7 +3,7 @@
     <ul>
       <li><router-link to="/createquestion">CreateQuestion</router-link></li>
       <li><router-link to="/home">Home</router-link></li>
-      <li><router-link to="/session/some_session_id">Question</router-link></li>
+      <li><router-link to="/question">Question</router-link></li>
     </ul>
     <router-view></router-view>
     <footer v-if="session_id">Session ID: {{session_id}}</footer>
@@ -33,6 +33,11 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+button {
+    width: 400px;
+    height: 50px;
+    margin-bottom: 15px;
 }
 footer {
   position: absolute;

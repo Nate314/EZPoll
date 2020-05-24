@@ -27,9 +27,8 @@ export default {
                     question_guid: question.QuestionGUID
                 })
             }).then(x => x.json())
-            .then(response => {
-                console.log(response);
-                this.$router.push(`session/${session_guid}`);
+            .then(() => {
+                this.$router.push('question');
             });
         } else {
             fetch(`${localStorage.getItem('api_url')}/session/new`, {
@@ -42,7 +41,7 @@ export default {
             }).then(x => x.json())
             .then(response => {
                 localStorage.setItem('session_guid', response.SessionGUID);
-                this.$router.push('home');
+                this.$router.push('question');
             });
         }
       }
@@ -55,9 +54,4 @@ export default {
 </script>
 
 <style scoped>
-button {
-    width: 400px;
-    height: 50px;
-    margin-bottom: 15px;
-}
 </style>

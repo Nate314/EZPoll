@@ -19,12 +19,6 @@ class ControllerQuestion(Resource):
             return self.get_question_with_answers(question_guid), StatusCodes.OK;
         else: return None, StatusCodes.NOT_FOUND;
 
-    # example get method passing an number
-    def post(self, question_guid):
-        success = True;
-        body = request.get_json();
-        return success, StatusCodes.INTERNAL_SERVER_ERROR;
-
     def get_question_list(self):
         return self.DB.select(['QuestionGUID', 'Description'], 'Question', '1 = 1').toJSON();
 

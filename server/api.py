@@ -7,6 +7,7 @@ from Config import Config;
 from ControllerUser import ControllerUser;
 from ControllerSession import ControllerSession;
 from ControllerQuestion import ControllerQuestion;
+from ControllerResult import ControllerResult;
 
 # reads in config files so that the Config class can be used later
 def configConfig(configFilename, cryptFilename):
@@ -38,6 +39,7 @@ def addEndpoints(api):
     api.add_resource(ControllerUser, '/api/user/<string:user_guid>');
     api.add_resource(ControllerSession, '/api/session/<string:session_guid>');
     api.add_resource(ControllerQuestion, '/api/question/<string:question_guid>');
+    api.add_resource(ControllerResult, '/api/result/<string:session_guid>');
 
 if __name__ == '__main__':
     if configConfig('config.json', 'crypt.json'):

@@ -14,7 +14,7 @@ export default {
   name: 'Home',
   methods: {
     btnNewPoll: function() {
-      
+
     },
     btnJoinPoll: function() {
     }
@@ -34,9 +34,4 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-button {
-    width: 400px;
-    height: 50px;
-    margin-bottom: 15px;
-}
 </style>

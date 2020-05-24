@@ -63,8 +63,3 @@ class ControllerSession(Resource):
             return new_session;
         else:
             return False;
-
-    # def get_question_with_answers(self, questionGUID):
-    #     question = self.DB.select(['QuestionGUID', 'Description'], 'Question', 'QuestionGUID = %s', [questionGUID])[0].toJSON();
-    #     answers = self.DB.select(['AnswerGUID', 'Description'], 'Answer', 'QuestionGUID = %s', [questionGUID]).toJSON();
-    #     return { 'question': question, 'answers': answers };

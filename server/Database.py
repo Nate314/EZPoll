@@ -88,7 +88,7 @@ class Database(object):
             self.__executesafe(query, tuple(values));
             return True;
         except Exception as e:
-            # print(e);
+            print(e);
             return False;
 
     #PUBLIC
