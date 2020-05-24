@@ -4,6 +4,8 @@ from flask_cors import CORS;
 
 from Middleware import Middleware;
 from Config import Config;
+from ControllerUser import ControllerUser;
+from ControllerSession import ControllerSession;
 from ControllerQuestion import ControllerQuestion;
 
 # reads in config files so that the Config class can be used later
@@ -33,6 +35,8 @@ def initializeAPI():
 
 def addEndpoints(api):
     # this is where all of the controllers and endpoints are matched up
+    api.add_resource(ControllerUser, '/api/user/<string:user_guid>');
+    api.add_resource(ControllerSession, '/api/session/<string:session_guid>');
     api.add_resource(ControllerQuestion, '/api/question/<string:question_guid>');
 
 if __name__ == '__main__':

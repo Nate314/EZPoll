@@ -51,7 +51,7 @@ class Database(object):
         cur = self.__executesafe(query, values);
         dt = DataTable(cur);
         return dt;
-    
+
     #PUBLIC
     # returns DataTable for select
     def select(self, columns: list, table: str, where = '', values: list = []):
@@ -63,12 +63,12 @@ class Database(object):
             return dt;
         else:
             return False;
-    
+
     #PUBLIC
     # returns DataTable for inserting one item
     def insertOne(self, table: str, props: list, entity):
         return self.insert(table, props, [entity]);
-    
+
     #PUBLIC
     # returns DataTable for inserting multiple items
     def insert(self, table: str, props: list, entities: list):
@@ -87,9 +87,10 @@ class Database(object):
             query = query[:-1] + ';';
             self.__executesafe(query, tuple(values));
             return True;
-        except:
+        except Exception as e:
+            # print(e);
             return False;
-    
+
     #PUBLIC
     # returns DataTable for updating one to many items
     def update(self, table: str, props: list, entity, where: str, values: list):
@@ -106,7 +107,7 @@ class Database(object):
             return True;
         except:
             return False;
-    
+
     #PUBLIC
     # returns DataTable for deleting one to many items
     def delete(self, table: str, where: str, values: list):
@@ -129,22 +130,22 @@ class DataTable(object):
         self.rows = [];
         for row in cur:
             self.rows.append(DataRow(self.columns, row));
-    
+
     #PUBLIC
     # get list of column titles for this DataTable
     def getColumns(self):
         return self.columns;
-    
+
     #PUBLIC
     # get list of DataRow objects in this DataTable
     def getRows(self):
         return self.rows;
-    
+
     #PUBLIC
     # return indexed item like this // dt[RowIndex]
     def __getitem__(self, index):
         return self.getRows()[index];
-    
+
     #PUBLIC
     # convert DataTable to json list of DatRow objects
     def __str__(self):
@@ -154,7 +155,7 @@ class DataTable(object):
             if i < len(self.rows) - 1:
                 result += ",\n";
         return result + "\n]";
-    
+
     #PUBLIC
     # returns JSON serializable verions of a datatable
     def toJSON(self):
@@ -171,12 +172,12 @@ class DataRow(object):
                 self.dictionary.update({columns[i]: row[i]});
         else:
             raise Exception('error creating datarow. number of columns does not match number of rows.');
-    
+
     #PUBLIC
     # return indexed item like this // dr['Column']
     def __getitem__(self, key):
         return self.dictionary[key];
-    
+
     #PUBLIC
     # return DataRow as json
     def __str__(self):
@@ -184,7 +185,7 @@ class DataRow(object):
         for key in self.dictionary.keys():
             result[key] = str(self.__getitem__(key));
         return str(result);
-    
+
     #PUBLIC
     # returns JSON serializable verions of a datatable
     def toJSON(self):

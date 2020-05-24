@@ -14,9 +14,6 @@ class Middleware(object):
 
     # this code runs on every api call
     def __call__(self, environ, start_response):
-        print('-----environ-----');
-        print(environ);
-        print(Config.allowedhosts)
         if environ['HTTP_ORIGIN'] in Config.allowedhosts:
             return self.app(environ, start_response);
         else:
