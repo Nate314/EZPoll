@@ -14,7 +14,7 @@ export default {
     Footer
   },
   mounted() {
-    localStorage.setItem('api_url', 'http://localhost:5000/api');
+    localStorage.setItem('api_url', 'http://pi.nathangawith.com:575/api');
     const user_guid = localStorage.getItem('user_guid');
     if (user_guid) {
       fetch(`${localStorage.getItem('api_url')}/user/${user_guid}`).then(x => x.json())

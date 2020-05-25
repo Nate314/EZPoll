@@ -20,7 +20,8 @@ class Database(object):
     def __getConnection(self):
         return pymysql.connect(host = self.host,
             port = self.port, user = self.user,
-            passwd = self.passwd, db = self.db);
+            passwd = self.passwd, db = self.db,
+            autocommit = True);
 
     #PRIVATE
     # executes a query on this database
@@ -88,7 +89,7 @@ class Database(object):
             self.__executesafe(query, tuple(values));
             return True;
         except Exception as e:
-            print(e);
+            # print(e);
             return False;
 
     #PUBLIC

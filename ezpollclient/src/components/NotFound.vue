@@ -67,6 +67,7 @@ export default {
       });
     } else if (path === '/') {
       localStorage.removeItem('session_guid');
+      localStorage.removeItem('user_guid');
       this.routeBasedOnLocalStorage();
     } else {
       this.routeBasedOnLocalStorage();
