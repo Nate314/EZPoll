@@ -1,2 +1,3 @@
 ezpollclient/node_modules
 ezpollclient/dist
+server/__pycache__
