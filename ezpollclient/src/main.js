@@ -15,6 +15,7 @@ const router = new VueRouter({
     {path: '/createquestion', component: CreateQuestion},
     {path: '/home', component: Home},
     {path: '/question', component: Question},
+    {path: '/notfound', component: NotFound},
     {path: '*', component: NotFound}
   ],
   mode: 'history'

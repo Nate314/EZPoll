@@ -1,10 +1,13 @@
 <template>
   <div>
-    <div>
-      <button v-on:click="btnNewPoll">New Poll</button>
+    <!--<div>
+      <input type="text" placeholder="Paste Poll ID Here"/>
     </div>
     <div>
       <button v-on:click="btnJoinPoll">Join Poll</button>
+    </div>-->
+    <div>
+      <button v-on:click="btnNewPoll">New Poll</button>
     </div>
   </div>
 </template>
@@ -14,12 +17,13 @@ export default {
   name: 'Home',
   methods: {
     btnNewPoll: function() {
-
+      this.$router.push('createquestion');
     },
     btnJoinPoll: function() {
     }
   },
   mounted() {
+    localStorage.setItem('api_url', 'http://localhost:5000/api');
     const user_guid = localStorage.getItem('user_guid');
     if (user_guid) {
       fetch(`${localStorage.getItem('api_url')}/user/${user_guid}`).then(x => x.json())

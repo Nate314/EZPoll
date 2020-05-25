@@ -3,6 +3,7 @@ from flask_restful import Resource;
 from StatusCodes import StatusCodes;
 from Database import Database;
 from guid import getGUID, nullGUID;
+import functools;
 
 class ControllerResult(Resource):
 
@@ -18,10 +19,15 @@ class ControllerResult(Resource):
         if len(session_guid) == 36:
             session = self.get_session(session_guid);
             question_guid = session['QuestionGUID'];
+            result = None;
             if session['ShowResults'] == '0':
-                return self.get_stats(session, session_guid, question_guid, user_guid), StatusCodes.OK;
+                result = self.get_stats(session, session_guid, question_guid, user_guid);
             elif session['ShowResults'] == '1':
-                return self.get_results(session_guid, question_guid), StatusCodes.OK;
+                result = self.get_results(session_guid, question_guid);
+            if result != None:
+                result['question_guid'] = session['QuestionGUID'];
+                result['enable_host_btns'] = session['HostGUID'] == user_guid;
+                return result, StatusCodes.OK;
         else: return None, StatusCodes.NOT_FOUND;
 
     # insert/update record for the given session/user/question/answer combo
@@ -61,8 +67,10 @@ class ControllerResult(Resource):
 
     def update_result(self, new_result):
         return self.DB.update('Result', ['AnswerGUID'], new_result,
-            'ResultGUID = %s AND SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
-            [new_result['ResultGUID'], new_result['SessionGUID'], new_result['QuestionGUID'], new_result['UserGUID']]);
+            'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
+            [new_result['SessionGUID'], new_result['QuestionGUID'], new_result['UserGUID']]);
+            # 'ResultGUID = %s AND SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
+            # [new_result['ResultGUID'], new_result['SessionGUID'], new_result['QuestionGUID'], new_result['UserGUID']]);
 
     def get_session(self, session_guid):
         return self.DB.select(['SessionGUID', 'Description', 'HostGUID', 'QuestionGUID', 'ShowResults'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
@@ -72,9 +80,20 @@ class ControllerResult(Resource):
         answers_count = self.DB.select(['COUNT(*) AS a_count'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s AND AnswerGUID <> %s', [session_guid, question_guid, nullGUID()]).getRows()[0];
         return {
             'participant_count': participant_count['p_count'],
-            'answers_count': answers_count['a_count'],
-            'enable_results_btn': session['HostGUID'] == user_guid
+            'answers_count': answers_count['a_count']
         };
 
     def get_results(self, session_guid, question_guid):
-        print();
+        datatable = self.DB.getDataTable("""SELECT Result.AnswerGUID, Answer.Description, COUNT(*) AnswerCount
+FROM Result
+JOIN Answer ON Answer.AnswerGUID = Result.AnswerGUID
+WHERE SessionGUID = %s AND Result.QuestionGUID = %s
+GROUP BY Result.AnswerGUID""", [session_guid, question_guid]);
+        return {
+            'results': list(map(lambda x: {
+                'AnswerGUID': x['AnswerGUID'],
+                'Description': x['Description'],
+                'AnswerCount': int(x['AnswerCount'])
+            }, datatable.getRows())),
+            'responses': functools.reduce(lambda a, b: a + b, map(lambda x: x['AnswerCount'], datatable.getRows()))
+        };

@@ -20,13 +20,10 @@ class ControllerSession(Resource):
     # otherwise perform the requested action on the session_guid
     def post(self, session_guid):
         body = request.get_json();
-        print('-----body-----');
-        print(body);
-        print('-----body-----');
         user_guid = body['user_guid'];
         question_guid = body['question_guid'];
         if session_guid == 'new':
-            return self.create_session(user_guid, user_guid), StatusCodes.OK;
+            return self.create_session(user_guid, question_guid), StatusCodes.OK;
         elif len(session_guid) == 36:
             if body['action'] == 'next':
                 return self.next_question(session_guid, user_guid, question_guid), StatusCodes.OK;
@@ -35,7 +32,7 @@ class ControllerSession(Resource):
         else: return None, StatusCodes.NOT_FOUND;
 
     def get_session(self, session_guid):
-        return self.DB.select(['SessionGUID', 'Description', 'QuestionGUID'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
+        return self.DB.select(['SessionGUID', 'Description', 'QuestionGUID', 'ShowResults'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
 
     def create_session(self, user_guid, question_guid):
         new_session = {
@@ -47,19 +44,17 @@ class ControllerSession(Resource):
         };
         if self.DB.insertOne('Session', ['SessionGUID', 'Description', 'HostGUID', 'QuestionGUID', 'ShowResults'], new_session):
             return new_session;
-        else:
-            return False;
+        else: return False;
 
     def next_question(self, session_guid, user_guid, question_guid):
-        new_session = { 'QuestionGUID': question_guid, 'ShowResults': 0 };
-        if self.DB.update('Session', ['QuestionGUID', 'ShowResults'], new_session, 'SessionGUID = %s AND HostGUID = %s', [session_guid, user_guid]):
-            return new_session;
-        else:
-            return False;
+        if self.DB.delete('Result', 'SessionGUID = %s', [session_guid]):
+            new_session = { 'QuestionGUID': question_guid, 'ShowResults': 0 };
+            if self.DB.update('Session', ['QuestionGUID', 'ShowResults'], new_session, 'SessionGUID = %s AND HostGUID = %s', [session_guid, user_guid]):
+                return new_session;
+        return False;
 
     def reveal_question(self, session_guid, user_guid, question_guid):
         new_session = { 'ShowResults': 1 };
         if self.DB.update('Session', ['ShowResults'], new_session, 'SessionGUID = %s AND HostGUID = %s AND QuestionGUID = %s', [session_guid, user_guid, question_guid]):
             return new_session;
-        else:
-            return False;
+        else: return False;
