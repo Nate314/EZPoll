@@ -7,6 +7,8 @@
 </template>
 
 <script>
+import * as ezpollapi from '../services/ezpoll.service';
+
 export default {
   name: 'CreateQuestion',
   data() {
@@ -20,28 +22,11 @@ export default {
         const user_guid = localStorage.getItem('user_guid');
         if (user_guid) {
             if (session_guid) {
-                fetch(`${localStorage.getItem('api_url')}/session/${session_guid}`, {
-                    method: 'post',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_guid: user_guid,
-                        question_guid: question.QuestionGUID,
-                        action: 'next'
-                    })
-                }).then(x => x.json())
-                .then(() => {
+                ezpollapi.postNextQuestion(session_guid, user_guid, question.QuestionGUID, () => {
                     this.$router.push('question');
                 });
             } else {
-                fetch(`${localStorage.getItem('api_url')}/session/new`, {
-                    method: 'post',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_guid: user_guid,
-                        question_guid: question.QuestionGUID
-                    })
-                }).then(x => x.json())
-                .then(response => {
+                ezpollapi.postCreateSession(user_guid, question.QuestionGUID, response => {
                     localStorage.setItem('session_guid', response.SessionGUID);
                     this.$router.push('question');
                 });
@@ -52,8 +37,7 @@ export default {
       }
   },
   mounted() {
-      fetch(`${localStorage.getItem('api_url')}/question/all`).then(x => x.json())
-        .then(response => this.questionTypes = response);
+      ezpollapi.getAllQuestions(response => this.questionTypes = response);
   }
 }
 </script>

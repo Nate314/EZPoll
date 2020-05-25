@@ -47,7 +47,9 @@ class ControllerResult(Resource):
                 'AnswerGUID': answer_guid,
                 'UserGUID': user_guid
             };
-            if is_new_result:
+            if session['ShowResults'] == '1':
+                return False, StatusCodes.OK;
+            elif is_new_result:
                 result = self.get_result(new_result);
                 if result == None:
                     return result_guid if self.insert_result(new_result) else False, StatusCodes.OK;
@@ -95,5 +97,5 @@ GROUP BY Result.AnswerGUID""", [session_guid, question_guid]);
                 'Description': x['Description'],
                 'AnswerCount': int(x['AnswerCount'])
             }, datatable.getRows())),
-            'responses': functools.reduce(lambda a, b: a + b, map(lambda x: x['AnswerCount'], datatable.getRows()))
+            'responses': functools.reduce(lambda a, b: a + b, map(lambda x: x['AnswerCount'], datatable.getRows()), 0)
         };

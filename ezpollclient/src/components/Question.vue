@@ -29,6 +29,8 @@
 </template>
 
 <script>
+import * as ezpollapi from '../services/ezpoll.service';
+
 export default {
   name: 'Question',
   data() {
@@ -51,36 +53,20 @@ export default {
           this.selected_index = i;
         }
       });
-      fetch(`${localStorage.getItem('api_url')}/result/${localStorage.getItem('session_guid')}`, {
-        method: 'post',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_guid: localStorage.getItem('user_guid'),
-          answer_guid: this.selected_index == null ? null : this.answers[this.selected_index].AnswerGUID,
-          result_guid: this.result_guid
-        })
-      }).then(x => x.json())
-      .then(response => {
+      ezpollapi.postResult(localStorage.getItem('session_guid'), localStorage.getItem('user_guid'),
+        this.selected_index == null ? null : this.answers[this.selected_index].AnswerGUID,
+        this.result_guid, response => {
           this.result_guid = response;
       });
     },
     showResults: function() {
-      fetch(`${localStorage.getItem('api_url')}/session/${localStorage.getItem('session_guid')}`, {
-          method: 'post',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              user_guid: localStorage.getItem('user_guid'),
-              question_guid: this.question.QuestionGUID,
-              action: 'reveal'
-          })
-      }).then(x => x.json());
+      ezpollapi.postShowResults(localStorage.getItem('session_guid'), localStorage.getItem('user_guid'), this.question.QuestionGUID);
     },
     nextQuestion: function() {
       this.$router.push('createquestion');
     },
     getQuestion: function(question_guid) {
-      return fetch(`${localStorage.getItem('api_url')}/question/${question_guid}`).then(x => x.json())
-        .then(response => {
+      return ezpollapi.getQuestion(question_guid, response => {
           this.selected_index = null;
           this.result_guid = null;
           this.question = response.question;
@@ -92,12 +78,10 @@ export default {
   mounted() {
     this.session_guid = localStorage.getItem('session_guid');
     if (this.session_guid) {
-      fetch(`${localStorage.getItem('api_url')}/session/${this.session_guid}`).then(x => x.json())
-        .then(session => {
+      ezpollapi.getSession(this.session_guid, session => {
           this.getQuestion(session.QuestionGUID).then(() => {
             this.interval = setInterval(() => {
-              fetch(`${localStorage.getItem('api_url')}/result/${this.session_guid}_${localStorage.getItem('user_guid')}`).then(x => x.json())
-                .then(stats => {
+              ezpollapi.getResultStats(this.session_guid, localStorage.getItem('user_guid'), stats => {
                   const isQuestionReset = this.info && this.info.results && stats && !stats.results;
                   const isNewQuestion = stats.question_guid !== this.question.QuestionGUID;
                   this.info = stats;

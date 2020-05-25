@@ -7,8 +7,11 @@ CREATE TABLE Session (
     SessionGUID CHAR(36) NOT NULL,
     Description VARCHAR(200) NOT NULL,
     HostGUID CHAR(36) NOT NULL,
+    QuestionGUID CHAR(36) NOT NULL,
+    ShowResults INT NOT NULL,
     PRIMARY KEY (SessionGUID),
-    FOREIGN KEY (HostGUID) REFERENCES User(UserGUID)
+    FOREIGN KEY (HostGUID) REFERENCES User(UserGUID),
+    FOREIGN KEY (QuestionGUID) REFERENCES Question(QuestionGUID)
 );
 
 -- User Table
