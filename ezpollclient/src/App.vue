@@ -1,11 +1,15 @@
 <template>
-  <div id="app">
-    <router-view></router-view>
+  <div class="app">
+    <div class="router-view">
+      <router-view></router-view>
+      <br />
+    </div>
     <Footer />
   </div>
 </template>
 
 <script>
+import * as ezpollapi from './services/ezpoll.service';
 import Footer from './components/Footer';
 
 export default {
@@ -14,14 +18,12 @@ export default {
     Footer
   },
   mounted() {
-    localStorage.setItem('api_url', 'http://pi.nathangawith.com:575/api');
+    fetch('config.json').then(x => x.json()).then(x => localStorage.setItem('api_url', x.api_url));
     const user_guid = localStorage.getItem('user_guid');
     if (user_guid) {
-      fetch(`${localStorage.getItem('api_url')}/user/${user_guid}`).then(x => x.json())
-        .then(response => console.log(response));
+      ezpollapi.getUser(user_guid, response => console.log(response));
     } else {
-      fetch(`${localStorage.getItem('api_url')}/user/new`).then(x => x.json())
-        .then(response => localStorage.setItem('user_guid', response.UserGUID));
+      ezpollapi.getUser('new', response => localStorage.setItem('user_guid', response.UserGUID));
     }
   }
 }
@@ -52,5 +54,24 @@ input {
 }
 h1 {
   color: white;
+}
+.app {
+  width: 99vw;
+  height: calc(100vh - 25px);
+  overflow: hidden;
+}
+.router-view {
+  width: 99vw;
+  height: calc(100vh - 25px);
+  overflow-y: scroll;
+}
+.router-view::-webkit-scrollbar {
+    width: 10px;
+}
+.router-view::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0);
+}
+.router-view::-webkit-scrollbar-thumb {
+    background: #23232e;
 }
 </style>

@@ -2,6 +2,9 @@
 /ezpollclient/node_modules
 /ezpollclient/dist
 
+/ezpollsocketserver/node_modules
+/ezpollsocketserver/dist
+
 # local env files
 .env.local
 .env.*.local

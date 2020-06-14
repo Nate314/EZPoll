@@ -71,26 +71,24 @@ class ControllerResult(Resource):
         return self.DB.update('Result', ['AnswerGUID'], new_result,
             'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
             [new_result['SessionGUID'], new_result['QuestionGUID'], new_result['UserGUID']]);
-            # 'ResultGUID = %s AND SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
-            # [new_result['ResultGUID'], new_result['SessionGUID'], new_result['QuestionGUID'], new_result['UserGUID']]);
 
     def get_session(self, session_guid):
         return self.DB.select(['SessionGUID', 'Description', 'HostGUID', 'QuestionGUID', 'ShowResults'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
 
     def get_stats(self, session, session_guid, question_guid, user_guid):
-        participant_count = self.DB.select(['COUNT(*) AS p_count'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s', [session_guid, question_guid]).getRows()[0];
-        answers_count = self.DB.select(['COUNT(*) AS a_count'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s AND AnswerGUID <> %s', [session_guid, question_guid, nullGUID()]).getRows()[0];
+        participant_count = self.DB.select(['COUNT(*) AS p_count FROM (SELECT COUNT(*)'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s GROUP BY UserGUID) P', [session_guid, question_guid]).getRows()[0];
+        answers_count = self.DB.select(['COUNT(*) AS a_count FROM (SELECT COUNT(*)'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s AND AnswerGUID <> %s GROUP BY UserGUID) A', [session_guid, question_guid, nullGUID()]).getRows()[0];
         return {
             'participant_count': participant_count['p_count'],
             'answers_count': answers_count['a_count']
         };
 
     def get_results(self, session_guid, question_guid):
-        datatable = self.DB.getDataTable("""SELECT Result.AnswerGUID, Answer.Description, COUNT(*) AnswerCount
+        datatable = self.DB.getDataTable("""SELECT Result.AnswerGUID, Answer.Description, COUNT(DISTINCT(Result.UserGUID)) AS AnswerCount
 FROM Result
 JOIN Answer ON Answer.AnswerGUID = Result.AnswerGUID
 WHERE SessionGUID = %s AND Result.QuestionGUID = %s
-GROUP BY Result.AnswerGUID""", [session_guid, question_guid]);
+GROUP BY Result.AnswerGUID, Result.UserGUID""", [session_guid, question_guid]);
         return {
             'results': list(map(lambda x: {
                 'AnswerGUID': x['AnswerGUID'],

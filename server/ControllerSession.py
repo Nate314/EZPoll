@@ -32,7 +32,7 @@ class ControllerSession(Resource):
         else: return None, StatusCodes.NOT_FOUND;
 
     def get_session(self, session_guid):
-        return self.DB.select(['SessionGUID', 'Description', 'QuestionGUID', 'ShowResults'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
+        return self.DB.select(['SessionGUID', 'Description', 'QuestionGUID', 'ShowResults', 'HostGUID'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
 
     def create_session(self, user_guid, question_guid):
         new_session = {

@@ -6,5 +6,5 @@
     "db": "EZPoll",
     "hostip": "0.0.0.0",
     "tokenlifetime": 3600,
-    "allowedhosts": ["http://localhost:8080", "http://ezpoll.nathangawith.com", "https://ezpoll.nathangawith.com", "http://localhost.nathangawith.com"]
+    "allowedhosts": ["http://localhost:8080", "http://localhost:8081", "http://ezpoll.nathangawith.com", "https://ezpoll.nathangawith.com", "http://localhost.nathangawith.com"]
 }
