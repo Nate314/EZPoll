@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3000');
+const socket = io(localStorage.getItem('api_url'));
 
 function safeCallback(callback) {
     return callback ? callback : () => undefined;

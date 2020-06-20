@@ -14,19 +14,17 @@ class ControllerResult(Resource):
     # if session results are available, return results
     # otherwise return stats
     def get(self, session_guid):
-        user_guid = session_guid.split('_')[1];
         session_guid = session_guid.split('_')[0];
         if len(session_guid) == 36:
             session = self.get_session(session_guid);
             question_guid = session['QuestionGUID'];
             result = None;
             if session['ShowResults'] == '0':
-                result = self.get_stats(session, session_guid, question_guid, user_guid);
+                result = self.get_stats(session, session_guid, question_guid);
             elif session['ShowResults'] == '1':
                 result = self.get_results(session_guid, question_guid);
             if result != None:
                 result['question_guid'] = session['QuestionGUID'];
-                result['enable_host_btns'] = session['HostGUID'] == user_guid;
                 return result, StatusCodes.OK;
         else: return None, StatusCodes.NOT_FOUND;
 
@@ -75,7 +73,7 @@ class ControllerResult(Resource):
     def get_session(self, session_guid):
         return self.DB.select(['SessionGUID', 'Description', 'HostGUID', 'QuestionGUID', 'ShowResults'], 'Session', 'SessionGUID = %s', [session_guid])[0].toJSON();
 
-    def get_stats(self, session, session_guid, question_guid, user_guid):
+    def get_stats(self, session, session_guid, question_guid):
         participant_count = self.DB.select(['COUNT(*) AS p_count FROM (SELECT COUNT(*)'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s GROUP BY UserGUID) P', [session_guid, question_guid]).getRows()[0];
         answers_count = self.DB.select(['COUNT(*) AS a_count FROM (SELECT COUNT(*)'], 'Result', 'SessionGUID = %s AND QuestionGUID = %s AND AnswerGUID <> %s GROUP BY UserGUID) A', [session_guid, question_guid, nullGUID()]).getRows()[0];
         return {
