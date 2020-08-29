@@ -24,7 +24,7 @@ class ControllerUser(Resource):
             'UserGUID': getGUID(),
             'Description': '',
             'SessionGUID': '000000000000000000000000000000000000'
-        }
+        };
         if self.DB.insertOne('User', ['UserGUID', 'Description', 'SessionGUID'], new_user):
             return new_user;
         else:

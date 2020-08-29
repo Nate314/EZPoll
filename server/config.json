@@ -1,8 +1,8 @@
 {
-    "host": "localhost",
+    "host": "mysql-db",
     "port": 3306,
     "user": "root",
-    "password": "r00t",
+    "password": "secret",
     "db": "EZPoll",
     "hostip": "0.0.0.0",
     "tokenlifetime": 3600,

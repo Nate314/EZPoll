@@ -14,10 +14,13 @@ class Middleware(object):
 
     # this code runs on every api call
     def __call__(self, environ, start_response):
-        if environ['HTTP_ORIGIN'] in Config.allowedhosts:
-            return self.app(environ, start_response);
-        else:
-            abort(Response('Forbidden', StatusCodes.FORBIDDEN));
+        # print('-----environ-----');
+        # print(environ);
+        # print('-----environ-----');
+        # if environ['HTTP_ORIGIN'] in Config.allowedhosts:
+        return self.app(environ, start_response);
+        # else:
+        #     abort(Response('Forbidden', StatusCodes.FORBIDDEN));
 
 # ---RESOURCES---
 # https://pypi.org/project/jwt/
