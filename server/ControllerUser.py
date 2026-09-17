@@ -19,11 +19,15 @@ class ControllerUser(Resource):
             return self.get_user(user_guid), StatusCodes.OK;
         else: return None, StatusCodes.NOT_FOUND;
 
+    # Every new user starts out assigned to this seeded placeholder session
+    # (see db/scripts/dml.sql) until they create or join a real one.
+    DEFAULT_SESSION_GUID = '3bb970e8-e8a1-479c-a1e3-0485567a3b33';
+
     def create_user(self):
         new_user = {
             'UserGUID': getGUID(),
             'Description': '',
-            'SessionGUID': '000000000000000000000000000000000000'
+            'SessionGUID': self.DEFAULT_SESSION_GUID
         };
         if self.DB.insertOne('User', ['UserGUID', 'Description', 'SessionGUID'], new_user):
             return new_user;
