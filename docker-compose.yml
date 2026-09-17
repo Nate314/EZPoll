@@ -45,3 +45,16 @@ services:
             interval: 5s
             timeout: 5s
             retries: 20
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - 8083:80
+        environment:
+            PMA_HOST: mysql-db
+            PMA_PORT: 3306
+            PMA_USER: root
+            PMA_PASSWORD: secret
+        depends_on:
+            mysql-db:
+                condition: service_healthy

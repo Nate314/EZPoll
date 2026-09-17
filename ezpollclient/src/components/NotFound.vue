@@ -1,12 +1,14 @@
 <template>
-  <div>
-    <h1 v-if="!loading">
-      404
-    </h1>
-    <h1 v-if="loading">
-      <span>loading</span>
-      <span v-for="i in dots" :key="i"> .</span>
-    </h1>
+  <div class="notfound-view">
+    <div class="card">
+      <h1 v-if="!loading">
+        404
+      </h1>
+      <h1 v-if="loading">
+        <span>loading</span>
+        <span v-for="i in dots" :key="i"> .</span>
+      </h1>
+    </div>
   </div>
 </template>
 
@@ -80,4 +82,16 @@ export default {
 </script>
 
 <style scoped>
+.notfound-view {
+  display: flex;
+  justify-content: center;
+}
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 320px;
+}
 </style>
