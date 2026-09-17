@@ -23,8 +23,8 @@ export default {
   },
   methods: {
     questionSelected: function(question) {
-        const session_guid = localStorage.getItem('session_guid');
-        const user_guid = localStorage.getItem('user_guid');
+        const session_guid = sessionStorage.getItem('session_guid');
+        const user_guid = sessionStorage.getItem('user_guid');
         if (user_guid) {
             if (session_guid) {
                 ezpollapi.postNextQuestion(session_guid, user_guid, question.QuestionGUID, () => {
@@ -32,7 +32,7 @@ export default {
                 });
             } else {
                 ezpollapi.postCreateSession(user_guid, question.QuestionGUID, response => {
-                    localStorage.setItem('session_guid', response.SessionGUID);
+                    sessionStorage.setItem('session_guid', response.SessionGUID);
                     this.$router.push('question');
                 });
             }

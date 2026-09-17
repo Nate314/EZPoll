@@ -32,7 +32,7 @@ export default {
     }
   },
   mounted() {
-    setInterval(() => this.session_guid = localStorage.getItem('session_guid'), 100);
+    setInterval(() => this.session_guid = sessionStorage.getItem('session_guid'), 100);
   }
 }
 </script>
@@ -47,7 +47,7 @@ footer {
   left: 0;
   width: 100%;
   padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--color-chrome-bg);
   backdrop-filter: blur(6px);
   border-top: 1px solid var(--color-border);
   font-size: 0.9rem;

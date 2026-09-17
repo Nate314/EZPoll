@@ -55,14 +55,14 @@ export default {
           this.selected_index = i;
         }
       });
-      ezpollapi.postResult(this.session_guid, localStorage.getItem('user_guid'),
+      ezpollapi.postResult(this.session_guid, sessionStorage.getItem('user_guid'),
         this.selected_index == null ? null : this.answers[this.selected_index].AnswerGUID,
         this.result_guid, response => {
           this.result_guid = response;
       });
     },
     showResults: function() {
-      ezpollapi.postShowResults(this.session_guid, localStorage.getItem('user_guid'), this.question.QuestionGUID);
+      ezpollapi.postShowResults(this.session_guid, sessionStorage.getItem('user_guid'), this.question.QuestionGUID);
     },
     nextQuestion: function() {
       this.$router.push('createquestion');
@@ -81,8 +81,8 @@ export default {
     }
   },
   created() {
-    const user_guid = localStorage.getItem('user_guid');
-    this.session_guid = localStorage.getItem('session_guid');
+    const user_guid = sessionStorage.getItem('user_guid');
+    this.session_guid = sessionStorage.getItem('session_guid');
     if (this.session_guid) {
       ezpollapi.getSession(this.session_guid, session => {
         this.enable_host_btns = session.HostGUID === user_guid;
