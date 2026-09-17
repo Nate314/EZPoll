@@ -56,6 +56,24 @@ class ControllerResult(Resource):
                 return result_guid if self.update_result(new_result) else False, StatusCodes.OK;
         else: return None, StatusCodes.NOT_FOUND;
 
+    # remove the given user's result row (if any) for the session's current
+    # question, then return refreshed stats. Used when a user's socket
+    # disconnects (e.g. they closed their tab) so the participant/answer
+    # counts shown to everyone still in the session reflect who's actually
+    # still around.
+    def delete(self, session_guid):
+        body = request.get_json(silent = True);
+        user_guid = body['user_guid'] if body else None;
+        if len(session_guid) == 36 and user_guid and len(user_guid) == 36:
+            session = self.get_session(session_guid);
+            question_guid = session['QuestionGUID'];
+            self.DB.delete('Result', 'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
+                [session_guid, question_guid, user_guid]);
+            result = self.get_stats(session, session_guid, question_guid);
+            result['question_guid'] = question_guid;
+            return result, StatusCodes.OK;
+        else: return None, StatusCodes.NOT_FOUND;
+
     def get_result(self, new_result):
         rows = self.DB.select(['ResultGUID', 'SessionGUID', 'QuestionGUID', 'AnswerGUID', 'UserGUID'], 'Result',
             'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',

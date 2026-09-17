@@ -11,6 +11,7 @@ var sessions = {
 // https://socket.io/docs/rooms-and-namespaces/
 socketio.on('connection', socket => {
     let socketSessionID = '';
+    let socketUserGUID = '';
 
     function joinSession(session_id, ack) {
         socket.leave(socketSessionID, () => {
@@ -57,13 +58,39 @@ socketio.on('connection', socket => {
     }
 
     function onResult(session_guid, body, ack) {
+        // The client's own postResult always sends its real user_guid,
+        // including the initial null-answer "I've joined this question"
+        // result created as soon as the question loads - so this is the
+        // most reliable place to learn which user this socket belongs to.
+        if (body && body.user_guid) {
+            socketUserGUID = body.user_guid;
+        }
         ezpoll.postResult(session_guid, body, resp => emitStatsAndAck(ack, session_guid, resp));
+    }
+
+    function onDisconnect() {
+        // A closed tab/browser fires a socket disconnect (promptly once the
+        // underlying transport - normally websocket after upgrade - is torn
+        // down; worst case is bounded by socket.io's ping timeout). Remove
+        // this user's result row for the session they were last in, if any,
+        // and broadcast the refreshed participant/answer counts to whoever
+        // is still in that session's room. Without this, participant_count
+        // (derived from Result rows) never goes back down after someone
+        // leaves - it only ever grows as people join/answer.
+        if (socketSessionID && socketUserGUID) {
+            ezpoll.deleteResult(socketSessionID, socketUserGUID, resp => {
+                if (resp) {
+                    socketio.to(socketSessionID).emit('stats', resp);
+                }
+            });
+        }
     }
 
     socket.on('user', onUserCreate);
     socket.on('session', onSession);
     socket.on('question', onQuestion);
     socket.on('result', onResult);
+    socket.on('disconnect', onDisconnect);
 });
 
 http.listen(3000, () => {

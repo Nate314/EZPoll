@@ -74,7 +74,8 @@ export default {
   },
   mounted() {
     this.initTheme();
-    fetch('config.json').then(x => x.json()).then(x => sessionStorage.setItem('api_url', x.api_url));
+    // api_url is already in sessionStorage by the time this runs - it's
+    // fetched and set in main.js before the Vue app is mounted at all.
     const user_guid = sessionStorage.getItem('user_guid');
     if (user_guid) {
       ezpollapi.getUser(user_guid, response => console.log(response));

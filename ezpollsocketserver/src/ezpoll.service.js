@@ -12,7 +12,13 @@ function get(path, callback) {
 function post(path, body, callback) {
     const headers = { 'Content-Type': 'application/json' };
     const options = { method: 'post', headers: headers, body: JSON.stringify(body) };
-    return fetch(`${config.api_url}${path}`, options).then(x => x.json()).then(x => safeCallback(callback, x));
+    return fetch(`${config.api_url}${path}`, options).then(x => x.json()).then(x => safeCallback(callback, x)).catch(e => console.log(e));
+}
+
+function del(path, body, callback) {
+    const headers = { 'Content-Type': 'application/json' };
+    const options = { method: 'delete', headers: headers, body: JSON.stringify(body) };
+    return fetch(`${config.api_url}${path}`, options).then(x => x.json()).then(x => safeCallback(callback, x)).catch(e => console.log(e));
 }
 
 export function getUser(user_guid, callback) {
@@ -37,4 +43,8 @@ export function getResultStats(session_guid, callback) {
 
 export function postResult(session_guid, body, callback) {
     return post(`/result/${session_guid}`, body, callback);
+}
+
+export function deleteResult(session_guid, user_guid, callback) {
+    return del(`/result/${session_guid}`, { user_guid: user_guid }, callback);
 }
