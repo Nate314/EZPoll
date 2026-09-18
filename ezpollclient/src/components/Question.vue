@@ -65,7 +65,7 @@ export default {
       ezpollapi.postShowResults(this.session_guid, sessionStorage.getItem('user_guid'), this.question.QuestionGUID);
     },
     nextQuestion: function() {
-      this.$router.push('createquestion');
+      this.$router.push('/createquestion');
     },
     getQuestion: function(question_guid) {
       return new Promise(resolve => {
@@ -91,9 +91,9 @@ export default {
       ezpollapi.getResultStats(stats => {
         console.log('stats', stats);
         const isQuestionReset = this.info && this.info.results && stats && !stats.results;
-        const isNewQuestion = stats.question_guid !== this.question.QuestionGUID;
+        const isNewQuestion = !this.question || stats.question_guid !== this.question.QuestionGUID;
         this.info = stats;
-        if (isQuestionReset || isNewQuestion) {
+        if (stats && stats.question_guid && (isQuestionReset || isNewQuestion)) {
           this.getQuestion(stats.question_guid).then(() => undefined);
         }
         if (this.info.results) {
@@ -107,7 +107,7 @@ export default {
         }
       });
     } else {
-      this.$router.push('notfound');
+      this.$router.push('/notfound');
     }
   }
 }

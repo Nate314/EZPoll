@@ -1,7 +1,5 @@
-# Build stage: compiles the Vue 2 / vue-cli-service app into static assets.
-# node:18-alpine is a current LTS release that is still compatible with
-# vue-cli 4.x / Vue 2 (this repo's Vue/Vue CLI versions are unchanged).
-FROM node:18-alpine AS build
+# Build stage: compiles the Vue 3 / Vite app into static assets.
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -10,18 +8,27 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-# webpack 4 (used by @vue/cli-service 4.x) uses MD4 hashing via Node's legacy
-# OpenSSL provider, which Node 17+ removed by default. This only affects the
-# build toolchain, not the shipped app.
-ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN npm run build
 
-# Runtime stage: serve the built static files with nginx.
-FROM nginx:1.27-alpine AS runtime
+# Runtime stage: unprivileged nginx (runs as uid 101, listens on 8080).
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# The image's entrypoint runs docker-entrypoint.d/*.sh, then renders
+# /etc/nginx/templates/*.template (envsubst) into /etc/nginx/conf.d/.
+COPY docker/15-public-config.envsh /docker-entrypoint.d/15-public-config.envsh
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY security-headers.inc.template /etc/nginx/templates/security-headers.inc.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+# config.json is generated at container start by the unprivileged user, so
+# pre-create it with the right owner.
+USER root
+RUN apk upgrade --no-cache \
+    && touch /usr/share/nginx/html/config.json \
+    && chown nginx:nginx /usr/share/nginx/html/config.json
+USER nginx
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+HEALTHCHECK --interval=15s --timeout=3s --retries=5 \
+  CMD wget -q --spider http://127.0.0.1:8080/ || exit 1

@@ -28,16 +28,16 @@ export default {
         if (user_guid) {
             if (session_guid) {
                 ezpollapi.postNextQuestion(session_guid, user_guid, question.QuestionGUID, () => {
-                    this.$router.push('question');
+                    this.$router.push('/question');
                 });
             } else {
                 ezpollapi.postCreateSession(user_guid, question.QuestionGUID, response => {
                     sessionStorage.setItem('session_guid', response.SessionGUID);
-                    this.$router.push('question');
+                    this.$router.push('/question');
                 });
             }
         } else {
-            this.$router.push('notfound');
+            this.$router.push('/notfound');
         }
       }
   },

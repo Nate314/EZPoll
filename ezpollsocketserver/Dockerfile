@@ -1,27 +1,28 @@
-# node:18-alpine is a current LTS release; it remains compatible with the
-# socket.io 2.x / express server code in this repo (versions unchanged).
-FROM node:18-alpine AS build
+FROM node:22-alpine AS deps
 
 WORKDIR /app
-
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --omit=dev
 
-COPY . .
-# "npm run build" transpiles src/ (and copies config.json etc) into dist/ via babel.
-RUN npm run build
+FROM node:22-alpine AS runtime
 
-# Runtime stage: only production dependencies + the built dist/ output.
-FROM node:18-alpine AS runtime
+# OS security fixes, and drop npm/corepack/yarn: the runtime only needs node.
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn*
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY src ./src
 
-COPY --from=build /app/dist ./dist
+# The official node image ships an unprivileged "node" user.
+USER node
 
 EXPOSE 3000
 
-CMD ["node", "dist/src/index.js"]
+HEALTHCHECK --interval=15s --timeout=3s --retries=5 \
+  CMD node -e "require('net').connect(3000,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+
+CMD ["node", "src/index.js"]

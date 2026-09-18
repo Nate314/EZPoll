@@ -15,6 +15,8 @@
 <script>
 import * as ezpollapi from '../services/ezpoll.service';
 
+const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default {
   name: 'NotFound',
   data() {
@@ -39,9 +41,9 @@ export default {
         const user_guid = sessionStorage.getItem('user_guid');
         const session_guid = sessionStorage.getItem('session_guid');
         if (!api_url || !user_guid || !session_guid) {
-          this.$router.push('home');
+          this.$router.push('/home');
         } else {
-          this.$router.push('question');
+          this.$router.push('/question');
         }
       }, 1000);
     }
@@ -53,7 +55,7 @@ export default {
     const path = this.$route.fullPath;
     console.log(path);
     const route = path.split('/');
-    if (route.length == 2 && route[1].length === 36) {
+    if (route.length == 2 && GUID_PATTERN.test(route[1])) {
       const candidate_session_guid = route[1];
       this.waitForSessionStorageItem('api_url', () => {
         ezpollapi.getSession(candidate_session_guid, response => {
@@ -75,7 +77,7 @@ export default {
       this.routeBasedOnSessionStorage();
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this.dotsinterval);
   }
 }

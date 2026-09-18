@@ -1,0 +1,21 @@
+#!/bin/sh
+# Sourced (.envsh) by the nginx image entrypoint before templates are rendered,
+# so exported variables reach envsubst. PUBLIC_SOCKET_URL is the browser-facing
+# socket server origin: it is written to config.json (read by the app at
+# startup) and used in the CSP connect-src.
+
+
+PUBLIC_SOCKET_URL="${PUBLIC_SOCKET_URL:-http://localhost:3000}"
+# ws:// / wss:// twin of the same origin, listed explicitly in connect-src.
+PUBLIC_SOCKET_WS_URL="$(printf '%s' "$PUBLIC_SOCKET_URL" | sed -e 's#^https://#wss://#' -e 's#^http://#ws://#')"
+export PUBLIC_SOCKET_URL PUBLIC_SOCKET_WS_URL
+
+case "$PUBLIC_SOCKET_URL" in
+  http://*|https://*) ;;
+  *) echo "PUBLIC_SOCKET_URL must start with http:// or https://" >&2; exit 1 ;;
+esac
+case "$PUBLIC_SOCKET_URL" in
+  *[!A-Za-z0-9:/._-]*) echo "PUBLIC_SOCKET_URL contains unexpected characters" >&2; exit 1 ;;
+esac
+
+printf '{"api_url": "%s"}\n' "$PUBLIC_SOCKET_URL" > /usr/share/nginx/html/config.json

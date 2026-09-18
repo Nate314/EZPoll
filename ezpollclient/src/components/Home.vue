@@ -13,7 +13,7 @@ export default {
   name: 'Home',
   methods: {
     btnNewPoll: function() {
-      this.$router.push('createquestion');
+      this.$router.push('/createquestion');
     }
   }
 }

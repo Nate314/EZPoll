@@ -2,6 +2,8 @@ USE EZPoll;
 
 INSERT INTO Question (QuestionGUID, Description) VALUES ('57d1d126-ae22-44c8-8459-2d72b745ef37', 'EMPTY');
 INSERT INTO Answer (AnswerGUID, Description, QuestionGUID) VALUES ('1ba2793b-e245-4938-ac38-7b6967773ea5', 'Yes', '57d1d126-ae22-44c8-8459-2d72b745ef37');
+-- Placeholder answer referenced by "joined but not yet answered" results (nullGUID() in server/guid.py).
+INSERT INTO Answer (AnswerGUID, Description, QuestionGUID) VALUES ('000000000000000000000000000000000000', 'None', '57d1d126-ae22-44c8-8459-2d72b745ef37');
 
 INSERT INTO Question (QuestionGUID, Description) VALUES ('f4206876-64bc-41b4-a54a-114239c88b91', 'Yes/No');
 INSERT INTO Answer (AnswerGUID, Description, QuestionGUID) VALUES ('3713bc74-b590-4550-8950-531fb807b0d7', 'Yes', 'f4206876-64bc-41b4-a54a-114239c88b91');
