@@ -3,6 +3,7 @@ from StatusCodes import StatusCodes
 from Database import Database
 from Lookups import require_question
 from Validation import guid_param
+from guid import nullGUID
 
 class ControllerQuestion(Resource):
 
@@ -18,9 +19,11 @@ class ControllerQuestion(Resource):
         return self.get_question_with_answers(guid_param(question_guid)), StatusCodes.OK
 
     def get_question_list(self):
-        return self.DB.select(['QuestionGUID', 'Description'], 'Question').toJSON()
+        return self.DB.select(['QuestionGUID', 'Description'], 'Question', order_by = ['SortOrder', 'QuestionGUID']).toJSON()
 
     def get_question_with_answers(self, questionGUID):
         question = require_question(questionGUID)
-        answers = self.DB.select(['AnswerGUID', 'Description'], 'Answer', 'QuestionGUID = %s', [questionGUID]).toJSON()
+        # the nullGUID() placeholder answer is not a selectable choice
+        answers = self.DB.select(['AnswerGUID', 'Description'], 'Answer', 'QuestionGUID = %s AND AnswerGUID <> %s',
+            [questionGUID, nullGUID()], order_by = ['SortOrder', 'AnswerGUID']).toJSON()
         return { 'question': question, 'answers': answers }

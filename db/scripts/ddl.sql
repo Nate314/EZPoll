@@ -27,6 +27,7 @@ CREATE TABLE User (
 CREATE TABLE Question (
     QuestionGUID CHAR(36) NOT NULL,
     Description VARCHAR(200) NOT NULL,
+    SortOrder INT NOT NULL,
     PRIMARY KEY (QuestionGUID)
 );
 
@@ -36,6 +37,7 @@ CREATE TABLE Answer (
     AnswerGUID CHAR(36) NOT NULL,
     Description VARCHAR(200) NOT NULL,
     QuestionGUID CHAR(36) NOT NULL,
+    SortOrder INT NOT NULL,
     PRIMARY KEY (AnswerGUID)
 );
 

@@ -102,11 +102,15 @@ class ControllerResult(Resource):
         }
 
     def get_results(self, session_guid, question_guid):
-        datatable = self.DB.getDataTable("""SELECT Result.AnswerGUID, Answer.Description, COUNT(DISTINCT(Result.UserGUID)) AS AnswerCount
-FROM Result
-JOIN Answer ON Answer.AnswerGUID = Result.AnswerGUID
-WHERE SessionGUID = %s AND Result.QuestionGUID = %s
-GROUP BY Result.AnswerGUID, Result.UserGUID""", [session_guid, question_guid])
+        # Driven from Answer so zero-vote answers are included, in the same
+        # SortOrder as the answer choices. The nullGUID() placeholder (joined
+        # but not yet answered) is not an answer and is left out.
+        datatable = self.DB.getDataTable("""SELECT Answer.AnswerGUID, Answer.Description, COUNT(DISTINCT Result.UserGUID) AS AnswerCount
+FROM Answer
+LEFT JOIN Result ON Result.AnswerGUID = Answer.AnswerGUID AND Result.SessionGUID = %s
+WHERE Answer.QuestionGUID = %s AND Answer.AnswerGUID <> %s
+GROUP BY Answer.AnswerGUID, Answer.Description, Answer.SortOrder
+ORDER BY Answer.SortOrder, Answer.AnswerGUID""", [session_guid, question_guid, nullGUID()])
         return {
             'results': list(map(lambda x: {
                 'AnswerGUID': x['AnswerGUID'],

@@ -37,6 +37,10 @@ Set these in a `.env` file next to `docker-compose.yml` (see `.env.example`).
 
 Generate real secrets with e.g. `openssl rand -hex 32`. The passwords are inserted into SQL by `db/initializeDB.sh` at first start, so changing them later requires `docker compose down -v` (or altering the user manually).
 
+## Answer and question order
+
+The order of questions and answers comes from the `SortOrder` column on the `Question` and `Answer` tables (set in `db/scripts/dml.sql`), never from GUID values. Every query that feeds the UI uses `ORDER BY SortOrder`. Databases created before this column existed do not have it: run `docker compose down -v` to drop the volume and re-seed.
+
 ## Security notes
 
 - The browser only talks to the client (nginx) and the socket server. The Python API is internal, authenticated with `INTERNAL_API_SECRET`, and bound to loopback on the host.

@@ -51,12 +51,15 @@ class Database(object):
         return DataTable(cur)
 
     #PUBLIC
-    # returns DataTable for select
-    def select(self, columns: list, table: str, where = '', values: list = []):
+    # returns DataTable for select; order_by is a list of column names
+    # (validated like every other identifier, ascending only)
+    def select(self, columns: list, table: str, where = '', values: list = [], order_by: list = []):
         cols = ', '.join(_identifier(c) for c in columns)
         query = 'SELECT ' + cols + ' FROM ' + _identifier(table)
         if where != '':
             query += ' WHERE ' + where
+        if len(order_by) > 0:
+            query += ' ORDER BY ' + ', '.join(_identifier(c) for c in order_by)
         return self.getDataTable(query + ';', values)
 
     #PUBLIC
