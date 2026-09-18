@@ -20,8 +20,8 @@
             {{result.Description}}
           </button>
           <div class="result-meta">
-            <progress :value="100 * result.AnswerCount / info.responses" max="100"></progress>
-            <div class="result-percent">{{Math.round(100 * result.AnswerCount / info.responses)}}% ({{result.AnswerCount}}/{{info.responses}})</div>
+            <progress :value="percentOf(result.AnswerCount)" max="100"></progress>
+            <div class="result-percent">{{Math.round(percentOf(result.AnswerCount))}}% ({{result.AnswerCount}}/{{info.responses}})</div>
           </div>
         </div>
         <button v-if="enable_host_btns" v-on:click="nextQuestion">NextQuestion</button>
@@ -47,6 +47,10 @@ export default {
     };
   },
   methods: {
+    // A question with no responses has info.responses === 0, and 0 / 0 is NaN.
+    percentOf: function(count) {
+      return this.info && this.info.responses > 0 ? 100 * count / this.info.responses : 0;
+    },
     answerSelected: function(answer) {
       this.answers.forEach((x, i) => {
         x['Chosen'] = false;
