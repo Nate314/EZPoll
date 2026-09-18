@@ -6,7 +6,7 @@ services:
         ports:
             - "${CLIENT_PORT:-8080}:8080"
         environment:
-            PUBLIC_SOCKET_URL: ${PUBLIC_SOCKET_URL:-http://localhost:3000}
+            PUBLIC_SOCKET_URL: ${PUBLIC_SOCKET_URL:-http://localhost:${SOCKET_PORT:-3000}}
         depends_on:
             - socket-server
         security_opt:
@@ -22,7 +22,7 @@ services:
         environment:
             API_URL: http://python-api:5000/api
             INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-only-internal-secret-change-me}
-            ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+            ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:${CLIENT_PORT:-8080},http://127.0.0.1:${CLIENT_PORT:-8080}}
         depends_on:
             - python-api
         security_opt:
@@ -44,7 +44,7 @@ services:
             DB_USER: ${EZPOLL_DB_USER:-ezpoll_app}
             DB_PASSWORD: ${EZPOLL_DB_PASSWORD:-dev-only-app-password-change-me}
             INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-only-internal-secret-change-me}
-            ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+            ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:${CLIENT_PORT:-8080},http://127.0.0.1:${CLIENT_PORT:-8080}}
         depends_on:
             mysql-db:
                 condition: service_healthy
