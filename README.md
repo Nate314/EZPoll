@@ -28,7 +28,7 @@ Several projects default to host port 8080, so two of them cannot run at once wi
 
 ```
 ./run.sh          # macOS, Linux, Git Bash
-.un.ps1         # Windows PowerShell
+.\run.ps1         # Windows PowerShell
 ```
 
 What it does:
@@ -38,7 +38,7 @@ What it does:
 3. If this project's stack is already running it leaves the ports alone and does not rebuild (rebuild with `./run.sh up --build -d`). If it is stopped, the ports in `.env` are re-checked and only busy ones are reassigned, so starting a second and third project back to back just works.
 4. Runs `docker compose up --build -d` and prints the URLs using the ports it chose, for example `EZPoll client: http://localhost:8081`.
 
-Any arguments are passed straight to `docker compose` after the `.env` step, for example `./run.sh down`, `./run.sh logs -f` or `.un.ps1 ps`.
+Any arguments are passed straight to `docker compose` after the `.env` step, for example `./run.sh down`, `./run.sh logs -f` or `.\run.ps1 ps`.
 
 The browser-visible origins follow the chosen ports. The client reaches the socket server at `PUBLIC_SOCKET_URL` (also the CSP `connect-src`), and the API and socket server only accept the origins in `ALLOWED_ORIGINS`. `docker-compose.yml` derives both from `SOCKET_PORT` and `CLIENT_PORT` (for example `http://localhost:${SOCKET_PORT:-3000}`), so when the launcher moves a port the CORS, websocket origin check and CSP move with it. Nothing is loosened: there is no wildcard origin. If you set `ALLOWED_ORIGINS` or `PUBLIC_SOCKET_URL` in `.env` yourself they win, so keep them consistent with the ports (the launcher prints a reminder).
 
