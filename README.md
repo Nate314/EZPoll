@@ -80,3 +80,53 @@ The order of questions and answers comes from the `SortOrder` column on the `Que
 - `ezpollclient/`: `npm install`, `npm run dev` (see its README).
 - `ezpollsocketserver/`: `npm install`, `npm start` (set `INTERNAL_API_SECRET`, `API_URL`, `ALLOWED_ORIGINS`).
 - `server/`: `pip install -r requirements.txt`, then run `gunicorn api:app` with the `DB_*` and `INTERNAL_API_SECRET` variables set.
+
+## End-to-end tests (Playwright)
+
+The `e2e/` folder is a standalone TypeScript Playwright suite with its own `package.json` and lockfile. It drives the running stack in real Chromium browsers (a host and participants in separate browser contexts) and also checks the client headers, the API and the socket server over plain HTTP and socket.io. It is not part of any Docker image.
+
+Start the stack first (`./run.sh` or `.\run.ps1`), then run the suite. Ports are read from the git ignored `.env` that the launcher writes, so the launcher chosen ports work without any extra setup.
+
+Git Bash:
+
+```bash
+cd e2e
+npm ci
+npx playwright install chromium
+npm test                       # everything
+npm run test:smoke             # only tests tagged @smoke
+npx playwright test --grep @security
+npm run test:headed            # watch the browsers
+npm run report                 # open the last HTML report
+```
+
+PowerShell:
+
+```powershell
+cd e2e
+npm ci
+npx playwright install chromium
+npm test
+npm run test:smoke
+npx playwright test --grep "@a11y"
+npm run test:headed
+npm run report
+```
+
+Other useful runs: `npx playwright test --workers=1` (serial), `npx playwright test tests/poll-flow.spec.ts` (one file), `npm run typecheck`.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `BASE_URL` | `http://localhost:$CLIENT_PORT` | Client origin. Must be one of the API and socket server allowed origins. |
+| `SOCKET_URL` | `http://localhost:$SOCKET_PORT` | Socket server origin (also what the CSP `connect-src` must contain). |
+| `API_URL` | `http://127.0.0.1:$API_PORT` | Python API, used directly for setup and the security tests. |
+| `INTERNAL_API_SECRET` | value in `.env`, else the development default from `docker-compose.yml` | Sent as `X-Internal-Secret` to the API. |
+| `CI` | unset | When set, failed tests are retried once. Local runs never retry. |
+
+Tags: `@smoke` (fast core checks), `@security`, `@a11y`, `@responsive`. Every test creates its own users and sessions with random GUIDs and never assumes an empty database, so files and tests run in parallel and in any order.
+
+Notes for people extending the suite:
+
+- The socket server limits creating users and sessions to 20 per minute per address, and all browser contexts share one address. Most tests therefore create users and sessions through the API and only seed them into `sessionStorage`; tests that make the app create them through the UI reserve a slot first (`e2e/support/rateBudget.ts`), which is coordinated across workers.
+- `a nested unknown path ends on /home` is marked `test.fail()` because of a known bug (see the pull request): `config.json` is fetched with a relative URL, so a path with two or more segments never mounts the app. The test turns red once that is fixed, which is the cue to remove `test.fail()`.
+- The accessibility scan (`@axe-core/playwright`) fails only on critical violations and attaches everything else it finds to the test report.
