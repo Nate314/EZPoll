@@ -130,3 +130,29 @@ Notes for people extending the suite:
 - The socket server limits creating users and sessions to 20 per minute per address, and all browser contexts share one address. Most tests therefore create users and sessions through the API and only seed them into `sessionStorage`; tests that make the app create them through the UI reserve a slot first (`e2e/support/rateBudget.ts`), which is coordinated across workers.
 - `a nested unknown path ends on /home` is marked `test.fail()` because of a known bug (see the pull request): `config.json` is fetched with a relative URL, so a path with two or more segments never mounts the app. The test turns red once that is fixed, which is the cue to remove `test.fail()`.
 - The accessibility scan (`@axe-core/playwright`) fails only on critical violations and attaches everything else it finds to the test report.
+
+### Running the e2e tests in Docker
+
+Nothing but Docker is needed: the official Playwright image already contains Node and the browsers, so there is no `npm ci` or `npx playwright install` on the host. The image tag has to match the `@playwright/test` version in `e2e/package.json` (currently 1.63.0). Start the stack first (`./run.sh` or `.\run.ps1`).
+
+The whole repository is mounted so the suite can read the launcher's `.env` (ports and the internal secret), which means no URLs need to be passed. The named volume keeps the container's Linux `node_modules` apart from any `node_modules` on the host.
+
+PowerShell:
+
+```powershell
+docker run --rm --ipc=host --network host -v "${PWD}:/repo" -v ezpoll-e2e-node-modules:/repo/e2e/node_modules -w /repo/e2e mcr.microsoft.com/playwright:v1.63.0-noble sh -c "npm ci && npx playwright test"
+```
+
+Git Bash (`MSYS_NO_PATHCONV=1` stops Git Bash from rewriting the `/repo` paths into Windows paths):
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm --ipc=host --network host -v "$PWD:/repo" -v ezpoll-e2e-node-modules:/repo/e2e/node_modules -w /repo/e2e mcr.microsoft.com/playwright:v1.63.0-noble sh -c "npm ci && npx playwright test"
+```
+
+macOS and Linux: the Git Bash command without `MSYS_NO_PATHCONV=1`.
+
+- `--network host` is required here, not optional. The client, API and socket server only accept the stack's `localhost` origins (`ALLOWED_ORIGINS`, and the CSP `connect-src` names `localhost` and the socket port), so the browser in the container has to see the stack as `localhost`. Linux supports host networking out of the box. Docker Desktop needs "Enable host networking" (Settings, Resources, Network, Docker Desktop 4.34 or newer).
+- Without host networking the run fails at start-up: the socket server answers the `host.docker.internal` origin with a 403.
+- Add Playwright arguments after `npx playwright test`, for example `--grep @smoke`, `--workers=1` or `tests/poll-flow.spec.ts`. To override a setting from the table above, add `-e NAME=value` (for example `-e BASE_URL=http://localhost:8083`).
+- Results are written to `e2e/test-results` and `e2e/playwright-report/index.html` in the repository (open the HTML file in a browser). On Linux those files are owned by root.
+- Verified on Windows with Docker Desktop 4.41: all 149 tests pass in the container. macOS and Linux were not tested.
