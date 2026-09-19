@@ -1,40 +1,42 @@
-import * as config from '../config.json';
-import fetch from 'node-fetch';
+const config = require('./config');
 
-function safeCallback(callback, arg) {
-    callback ? callback(arg) : undefined;
+const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isGuid = value => typeof value === 'string' && GUID_PATTERN.test(value);
+
+// Calls the Python API and always resolves to a JSON value; API errors come
+// back as { error: <message> } so callers (and clients) get a consistent shape.
+async function call(method, path, body) {
+    const headers = { 'X-Internal-Secret': config.internalSecret };
+    const options = { method, headers, signal: AbortSignal.timeout(10000) };
+    if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+    }
+    try {
+        const response = await fetch(`${config.apiUrl}${path}`, options);
+        const data = await response.json();
+        return response.ok ? data : { error: (data && data.message) || `HTTP ${response.status}` };
+    } catch (e) {
+        console.error('API call failed:', method, path, e.message);
+        return { error: 'Upstream error' };
+    }
 }
 
-function get(path, callback) {
-    return fetch(`${config.api_url}${path}`).then(x => x.json()).then(x => safeCallback(callback, x)).catch(e => console.log(e));
+// Path segments are only ever built from validated GUIDs or fixed keywords.
+const segment = value => (value === 'new' || value === 'all' || isGuid(value)) ? value : null;
+
+function guarded(value, fn) {
+    const seg = segment(value);
+    return seg ? fn(seg) : Promise.resolve({ error: 'Invalid identifier' });
 }
 
-function post(path, body, callback) {
-    const headers = { 'Content-Type': 'application/json' };
-    const options = { method: 'post', headers: headers, body: JSON.stringify(body) };
-    return fetch(`${config.api_url}${path}`, options).then(x => x.json()).then(x => safeCallback(callback, x));
-}
-
-export function getUser(user_guid, callback) {
-    return get(`/user/${user_guid}`, callback);
-}
-
-export function getQuestion(question_guid, callback) {
-    return get(`/question/${question_guid}`, callback);
-}
-
-export function getSession(session_guid, callback) {
-    return get(`/session/${session_guid}`, callback);
-}
-
-export function postSessionAction(session_guid, body, callback) {
-    return post(`/session/${session_guid}`, body, callback);
-}
-
-export function getResultStats(session_guid, callback) {
-    return get(`/result/${session_guid}`, callback);
-}
-
-export function postResult(session_guid, body, callback) {
-    return post(`/result/${session_guid}`, body, callback);
-}
+module.exports = {
+    isGuid,
+    getUser: guid => guarded(guid, s => call('GET', `/user/${s}`)),
+    getQuestion: guid => guarded(guid, s => call('GET', `/question/${s}`)),
+    getSession: guid => guarded(guid, s => call('GET', `/session/${s}`)),
+    postSessionAction: (guid, body) => guarded(guid, s => call('POST', `/session/${s}`, body)),
+    getResultStats: guid => guarded(guid, s => call('GET', `/result/${s}`)),
+    postResult: (guid, body) => guarded(guid, s => call('POST', `/result/${s}`, body)),
+    deleteResult: (guid, userGuid) => guarded(guid, s => call('DELETE', `/result/${s}`, { user_guid: userGuid }))
+};
