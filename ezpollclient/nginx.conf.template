@@ -1,0 +1,30 @@
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Security headers. Repeated in the locations below because nginx does not
+    # inherit add_header into a location that defines its own add_header.
+    include /etc/nginx/conf.d/security-headers.inc;
+
+    # vue-router uses history mode, so unknown paths fall back to index.html
+    # and the client-side router handles them.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # index.html references the current build's content-hashed JS/CSS
+    # filenames, so it must always be revalidated. config.json is generated at
+    # container start and must not be cached either.
+    location = /index.html {
+        add_header Cache-Control "no-cache" always;
+        include /etc/nginx/conf.d/security-headers.inc;
+    }
+    location = /config.json {
+        add_header Cache-Control "no-store" always;
+        include /etc/nginx/conf.d/security-headers.inc;
+    }
+}

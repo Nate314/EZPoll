@@ -24,3 +24,7 @@ yarn-error.log*
 *.sw?
 
 /server/__pycache__
+/ezpollclient/public/config.json
+
+# local secrets
+.env

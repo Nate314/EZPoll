@@ -1,33 +1,17 @@
+import os
+
+# All configuration comes from environment variables (see .env.example).
 class Config:
 
     # db variables
-    host = None;
-    port = None;
-    user = None;
-    password = None;
-    db = None;
-    # used to start up the server
-    hostip = None;
-    tokenlifetime = None;
-    allowedhosts = [];
-    # keys
-    rsaprivatekey = None;
-    rsapublickey = None;
-    secretkey = None;
-
-    def __init__(self, configJSON, cryptJSON):
-        # setting db variables
-        Config.host = configJSON['host'];
-        Config.port = configJSON['port'];
-        Config.user = configJSON['user'];
-        Config.password = configJSON['password'];
-        Config.db = configJSON['db'];
-        # setting server variables
-        Config.hostip = configJSON['hostip'];
-        Config.tokenlifetime = configJSON['tokenlifetime'];
-        Config.allowedhosts = configJSON['allowedhosts'];
-        print(Config.allowedhosts);
-        # setting keys
-        Config.rsaprivatekey = cryptJSON['rsaprivatekey'];
-        Config.rsapublickey = cryptJSON['rsapublickey'];
-        Config.secretkey = cryptJSON['secretkey'];
+    host = os.environ.get('DB_HOST', 'mysql-db')
+    port = int(os.environ.get('DB_PORT', '3306'))
+    user = os.environ.get('DB_USER', 'ezpoll_app')
+    password = os.environ.get('DB_PASSWORD', '')
+    db = os.environ.get('DB_NAME', 'EZPoll')
+    # shared secret the socket server must send in the X-Internal-Secret header
+    internal_secret = os.environ.get('INTERNAL_API_SECRET', '')
+    # browser origins allowed by CORS (the API is normally only called by the
+    # socket server, so this is defense in depth)
+    allowed_origins = [x.strip() for x in os.environ.get(
+        'ALLOWED_ORIGINS', 'http://localhost:8080,http://127.0.0.1:8080').split(',') if x.strip()]

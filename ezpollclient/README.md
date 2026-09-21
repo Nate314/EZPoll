@@ -1,24 +1,14 @@
 # ezpollclient
 
-## Project setup
+Vue 3 + Vite single page app.
+
 ```
 npm install
+npm run dev      # dev server with hot reload
+npm run build    # production build into dist/
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+At runtime the app reads `/config.json` (`{"api_url": "<socket server origin>"}`).
+In Docker this file is generated at container start from `PUBLIC_SOCKET_URL`,
+and the same value is used in the Content-Security-Policy `connect-src`.
+For `npm run dev`, create `public/config.json` yourself (it is not committed).
