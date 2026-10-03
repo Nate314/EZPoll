@@ -53,7 +53,6 @@ export default {
       this.dots = Array((this.dots.length + 1) % 4).fill(null);
     }, 250);
     const path = this.$route.fullPath;
-    console.log(path);
     const route = path.split('/');
     if (route.length == 2 && GUID_PATTERN.test(route[1])) {
       const candidate_session_guid = route[1];

@@ -93,7 +93,6 @@ export default {
         this.getQuestion(session.QuestionGUID).then(() => undefined);
       });
       ezpollapi.getResultStats(stats => {
-        console.log('stats', stats);
         const isQuestionReset = this.info && this.info.results && stats && !stats.results;
         const isNewQuestion = !this.question || stats.question_guid !== this.question.QuestionGUID;
         this.info = stats;
