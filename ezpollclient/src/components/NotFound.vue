@@ -1,10 +1,7 @@
 <template>
   <div class="notfound-view">
     <div class="card">
-      <h1 v-if="!loading">
-        404
-      </h1>
-      <h1 v-if="loading">
+      <h1>
         <span>loading</span>
         <span v-for="i in dots" :key="i"> .</span>
       </h1>
@@ -22,8 +19,7 @@ export default {
   data() {
     return {
       dotsinterval: null,
-      dots: [],
-      loading: true
+      dots: []
     }
   },
   methods: {

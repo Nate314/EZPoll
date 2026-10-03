@@ -69,7 +69,7 @@ test.describe('home page and navigation', () => {
     expect(await actor.sessionGuid()).toBeNull();
   });
 
-  test('the 404 heading is never rendered, unknown routes only show the loading state (known difference)', async ({ newActor }) => {
+  test('unknown routes show the loading state while they redirect, never a 404 heading', async ({ newActor }) => {
     const actor = await newActor();
     await actor.goto('/definitely-missing');
     await expect(actor.page.getByRole('heading', { level: 1 })).toContainText('loading');
