@@ -23,7 +23,7 @@ const router = createRouter({
 // mounted, so waiting here guarantees api_url is already present in
 // sessionStorage the first time anything (including the lazily-created
 // socket.io connection in ezpoll.service.js) reads it.
-fetch('config.json')
+fetch('/config.json')
   .then(x => x.json())
   .then(config => {
     sessionStorage.setItem('api_url', config.api_url);
