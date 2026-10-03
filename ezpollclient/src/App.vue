@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import * as ezpollapi from './services/ezpoll.service';
+import { userReady } from './services/user.service';
 import Footer from './components/Footer.vue';
 
 const THEME_STORAGE_KEY = 'theme';
@@ -76,23 +76,7 @@ export default {
     this.initTheme();
     // api_url is already in sessionStorage by the time this runs - it's
     // fetched and set in main.js before the Vue app is mounted at all.
-    const user_guid = sessionStorage.getItem('user_guid');
-    const createUser = () => ezpollapi.getUser('new', response => {
-      if (response && response.UserGUID) {
-        sessionStorage.setItem('user_guid', response.UserGUID);
-      }
-    });
-    if (user_guid) {
-      // A stored user that no longer exists server-side gets replaced.
-      ezpollapi.getUser(user_guid, response => {
-        if (!response || !response.UserGUID) {
-          sessionStorage.removeItem('user_guid');
-          createUser();
-        }
-      });
-    } else {
-      createUser();
-    }
+    userReady();
   }
 }
 </script>

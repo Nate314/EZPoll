@@ -1,4 +1,5 @@
 import { test, expect } from '../support/fixtures';
+import { takeCreationSlots } from '../support/rateBudget';
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -87,6 +88,27 @@ test.describe('home page and navigation', () => {
     await actor.goto('/createquestion');
     await expect(actor.questionTypeButtons()).toHaveCount(5);
   });
+
+  for (const identity of ['none', 'stale'] as const) {
+    test(`a question type clicked the moment it can be clicked creates the poll (stored user: ${identity})`, async ({ newActor }) => {
+      await takeCreationSlots({ sessions: 1 });
+      const actor = await newActor({ identity });
+      // Clicks Yes/No as soon as it is rendered and enabled, without waiting for a valid user_guid.
+      await actor.page.addInitScript(() => {
+        const observer = new MutationObserver(() => {
+          const button = Array.from(document.querySelectorAll<HTMLButtonElement>('.option-list button'))
+            .find(b => (b.textContent || '').trim() === 'Yes/No' && !b.disabled);
+          if (!button) return;
+          observer.disconnect();
+          button.click();
+        });
+        observer.observe(document, { childList: true, subtree: true, attributes: true });
+      });
+      await actor.goto('/createquestion');
+      await actor.waitForQuestion();
+      expect(await actor.answerLabels()).toEqual(['Yes', 'No']);
+    });
+  }
 
   test('a hard reload on /question keeps the session and the host controls', async ({ createPoll }) => {
     const poll = await createPoll('Yes/No');
