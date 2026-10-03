@@ -30,9 +30,10 @@ async function expectCleanLayout(page: Page, viewportWidth: number) {
       docScrollWidth: document.documentElement.scrollWidth,
       bodyScrollWidth: document.body.scrollWidth,
       scrollerOverflowsX: scroller ? scroller.scrollWidth > scroller.clientWidth + 1 : false,
-      boxes: [...controls, ...Array.from(document.querySelectorAll('h1, h3, .app-title, #invite-link')).filter(visible)].map(box),
+      boxes: [...controls, ...Array.from(document.querySelectorAll('h1, h2, .app-title, #invite-link')).filter(visible)].map(box),
       clippedButtons: controls.filter(el => el.tagName === 'BUTTON' && el.scrollWidth > el.clientWidth + 1).map(el => (el.textContent || '').trim()),
-      buttons: controls.filter(el => el.tagName === 'BUTTON').map(box),
+      // The invite link is a button inside the footer, so the footer cannot cover it.
+      buttons: controls.filter(el => el.tagName === 'BUTTON' && !el.closest('footer')).map(box),
       footer: footer && visible(footer) ? box(footer) : null,
     };
   });

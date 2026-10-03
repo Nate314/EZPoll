@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="status-block" v-if="info && info.participant_count">
-        <h3>{{info.answers_count}} / {{info.participant_count}} participants have answered . . .</h3>
+        <h2>{{info.answers_count}} / {{info.participant_count}} participants have answered . . .</h2>
         <button v-if="enable_host_btns" v-on:click="showResults">Show Results</button>
       </div>
       <div class="results-block" v-if="info && info.results">

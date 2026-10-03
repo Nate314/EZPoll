@@ -71,7 +71,7 @@ export class Actor {
 
   answerButtons(): Locator { return this.page.locator('.option-list button'); }
   heading(): Locator { return this.page.locator('.question-view h1'); }
-  status(): Locator { return this.page.locator('.status-block h3'); }
+  status(): Locator { return this.page.locator('.status-block h2'); }
   showResultsButton(): Locator { return this.page.getByRole('button', { name: 'Show Results' }); }
   nextQuestionButton(): Locator { return this.page.getByRole('button', { name: 'NextQuestion' }); }
 
