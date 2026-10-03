@@ -90,11 +90,6 @@ export class Actor {
   }
 
   async answer(label: string) {
-    // The app registers the visitor with a placeholder answer as soon as the
-    // question loads; an answer clicked before that round trip finishes is
-    // dropped by the server (reported as a known issue in the pull request). The status
-    // block only renders once the visitor is counted, so wait for it.
-    await expect(this.status()).toBeVisible();
     const button = this.page.locator('.option-list').getByRole('button', { name: label, exact: true });
     await button.click();
     await expect(button).toHaveClass(/btnselected/);

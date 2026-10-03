@@ -51,6 +51,11 @@ class ControllerResult(Resource):
             result = self.get_result(new_result)
             if result == None:
                 return result_guid if self.insert_result(new_result) else False, StatusCodes.OK
+            # The user already has a row: they joined, or answered before the
+            # client learned its ResultGUID. A real answer is recorded on that
+            # row; another join (no answer) leaves it as it is.
+            elif answer_guid is not None and not self.update_result(new_result):
+                return False, StatusCodes.OK
             else: return result['ResultGUID'], StatusCodes.OK
         else:
             return result_guid if self.update_result(new_result) else False, StatusCodes.OK

@@ -84,6 +84,42 @@ test.describe('full host and participant flow', () => {
     await participant.expectResults([['Yes', 0], ['No', 0], ['Maybe', 1]]);
   });
 
+  test('an answer clicked before the join round trip finishes is counted', async ({ createPoll, newActor }) => {
+    const poll = await createPoll('Yes/No');
+    const participant = await newActor();
+    // Clicks No in the same tick the answers render, before the client knows its ResultGUID.
+    await participant.page.addInitScript(() => {
+      const observer = new MutationObserver(() => {
+        const button = Array.from(document.querySelectorAll<HTMLButtonElement>('.option-list button'))
+          .find(b => (b.textContent || '').trim() === 'No');
+        if (!button) return;
+        observer.disconnect();
+        button.click();
+      });
+      observer.observe(document, { childList: true, subtree: true });
+    });
+    await participant.openInvite(poll.inviteUrl);
+    await poll.host.expectCounts(1, 2);
+    await poll.host.showResults();
+    await poll.host.expectResults([['Yes', 0], ['No', 1]]);
+  });
+
+  test('an answer posted without a result_guid updates the row the join created', async ({ api, questions }) => {
+    const host = await api.newUser();
+    const guest = await api.newUser();
+    const yesNo = questions['Yes/No'].QuestionGUID;
+    const session = await api.createSession(host, yesNo);
+    const { answers } = await api.question(yesNo);
+    const joined = await (await api.answer(session, guest, null)).json();
+    expect(await (await api.answer(session, guest, answers[1].AnswerGUID)).json()).toBe(joined);
+    expect(await api.stats(session)).toMatchObject({ participant_count: 1, answers_count: 1 });
+    // Joining again (no answer, no result_guid) must not wipe the answer.
+    expect(await (await api.answer(session, guest, null)).json()).toBe(joined);
+    expect(await api.stats(session)).toMatchObject({ participant_count: 1, answers_count: 1 });
+    await api.sessionAction(session, { user_guid: host, question_guid: yesNo, action: 'reveal' });
+    expect((await api.stats(session)).results.map((r: any) => r.AnswerCount)).toEqual([0, 1]);
+  });
+
   test('the host can answer their own poll', async ({ createPoll }) => {
     const poll = await createPoll('Yes/No');
     const participant = await poll.join();
