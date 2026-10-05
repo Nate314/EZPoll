@@ -33,13 +33,16 @@ io.on('connection', socket => {
 
     // Wraps a handler: acks are always callable, floods are dropped, and a
     // thrown error becomes a generic ack instead of crashing the process.
+    // The handler always gets its declared parameters with the ack last: an
+    // omitted argument is undefined, so the ack never lands in its slot.
     function handle(name, fn) {
         socket.on(name, (...args) => {
             const ack = typeof args[args.length - 1] === 'function' ? args.pop() : noop;
             if (!allow(`ev:${socket.id}`, EVENT_LIMIT.max, EVENT_LIMIT.windowMs)) {
                 return ack({ error: 'Too many requests' });
             }
-            Promise.resolve(fn(...args, ack)).catch(e => {
+            const params = Array.from({ length: fn.length - 1 }, (_, i) => args[i]);
+            Promise.resolve(fn(...params, ack)).catch(e => {
                 console.error(`Error handling '${name}':`, e);
                 ack({ error: 'Internal error' });
             });

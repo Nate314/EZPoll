@@ -150,6 +150,18 @@ test.describe('@security socket.io identity and authorization', () => {
     expect((await emitAck(socket, 'user', user)).UserGUID).toBe(user);
   });
 
+  test('an omitted or extra argument gets the normal acknowledgement, not Internal error', async ({ api }) => {
+    const socket = client({ origin: clientOrigin });
+    await connected(socket);
+    // The optional body of 'session' is left out, so the ack is the second argument.
+    expect(await emitAck(socket, 'session', 'not-a-guid')).toEqual({ error: 'Invalid identifier' });
+    expect(await emitAck(socket, 'session', GUID)).toEqual(await emitAck(socket, 'session', GUID, null));
+    expect(await emitAck(socket, 'result', GUID)).toEqual({ error: 'Invalid request' });
+    expect(await emitAck(socket, 'user', INJECTION, 'extra')).toEqual({ error: 'Invalid identifier' });
+    const user = await api.newUser();
+    expect((await emitAck(socket, 'user', user)).UserGUID).toBe(user);
+  });
+
   test('an oversized payload drops the connection instead of being processed', async ({ api }) => {
     const user = await api.newUser();
     const socket = client({ origin: clientOrigin });
