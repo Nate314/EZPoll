@@ -46,7 +46,7 @@ Plain `docker compose up --build` still works exactly as before with the 8080 de
 
 To pin ports by hand, edit `.env` (see `.env.example`). To start over, run `./run.sh down` and delete `.env`; the next launcher run picks ports again. The launcher needs `docker compose` v2 and, on macOS and Linux, bash; it uses only POSIX tools (`sed`, `awk`, `grep`).
 
-`run.sh` and `run.ps1` are vendored copies of the shared launcher in [compose-launcher](https://github.com/Nate314/compose-launcher), at the commit recorded in `run.version`. Do not edit them here: fix the launcher there and sync it. This project's ports, defaults and printed URLs live in `run.conf`.
+`run.sh` and `run.ps1` are small stubs. The launcher itself lives in [compose-launcher](https://github.com/Nate314/compose-launcher), which is included here as a git submodule in the `compose-launcher` folder. A plain `git clone` leaves that folder empty, so the first launcher run fetches it with `git submodule update --init compose-launcher`. That step needs network access and a real git clone (a zip download cannot fetch it). To get it up front, clone with `git clone --recurse-submodules`. This project's ports, defaults and printed URLs live in `run.conf`. Plain `docker compose up --build` does not use the launcher or the submodule.
 
 ## Configuration (environment variables)
 
