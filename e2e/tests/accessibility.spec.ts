@@ -98,10 +98,24 @@ test.describe('@a11y basic accessibility', () => {
     await expect(actor.page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
+  test('the invite link is a button that can be reached and copied with Tab and Enter', async ({ createPoll }) => {
+    const poll = await createPoll('Yes/No');
+    const page = poll.host.page;
+    await poll.host.context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.evaluate(() => navigator.clipboard.writeText('not the invite link'));
+    const link = page.getByRole('button', { name: poll.inviteUrl });
+    await expect(link).toHaveAccessibleDescription('Copy to clipboard');
+    await tabTo(page, { text: poll.inviteUrl });
+    await expect(page.getByText('Copy to clipboard')).toBeVisible();
+    await page.keyboard.press('Enter');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(poll.inviteUrl);
+    await expect(link).toBeFocused();
+  });
+
   for (const scheme of ['light', 'dark'] as const) {
-    // Only critical violations fail the test. Everything else axe finds is attached
-    // to the test report as "known issues" so it stays visible without blocking.
-    test(`axe finds no critical violations in the ${scheme} theme`, async ({ createPoll }, testInfo) => {
+    // Minor findings do not fail the test. Everything axe finds is attached to
+    // the test report so it stays visible without blocking.
+    test(`axe finds no moderate, serious or critical violations in the ${scheme} theme`, async ({ createPoll }, testInfo) => {
       const poll = await createPoll('Yes/No', { colorScheme: scheme });
       const participant = await poll.join({ colorScheme: scheme });
       await participant.answer('Yes');
@@ -112,13 +126,13 @@ test.describe('@a11y basic accessibility', () => {
           body: JSON.stringify(violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.length, help: v.help })), null, 2),
           contentType: 'application/json',
         });
-        return violations.filter(v => v.impact === 'critical').map(v => `${screen}: ${v.id}`);
+        return violations.filter(v => v.impact !== 'minor').map(v => `${screen}: ${v.id}`);
       };
-      const critical = [
+      const blocking = [
         ...await scan(poll.host.page, 'question'),
         ...await (async () => { await poll.host.showResults(); await poll.host.expectResults([['Yes', 1], ['No', 0]]); return scan(poll.host.page, 'results'); })(),
       ];
-      expect(critical).toEqual([]);
+      expect(blocking).toEqual([]);
     });
   }
 });

@@ -10,10 +10,10 @@
         :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
       >{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
     </header>
-    <div class="router-view">
+    <main class="router-view">
       <router-view></router-view>
       <br />
-    </div>
+    </main>
     <Footer />
   </div>
 </template>
@@ -228,9 +228,12 @@ h1 {
   margin: var(--space-lg) var(--space-md) var(--space-md);
 }
 
-h3 {
+/* The status line under a question: a second-level heading at the size an h3 has by default. */
+h2 {
   color: var(--color-text-muted);
+  font-size: 1.17em;
   font-weight: 500;
+  margin: 1em 0;
 }
 
 .app {

@@ -3,7 +3,7 @@
     <div class="left">
       <span>Invite Link: </span>
       <span class="tooltip">
-        <span id="invite-link" v-on:click="copyLink">{{getInviteLink()}}</span>
+        <button id="invite-link" type="button" aria-describedby="myTooltip" v-on:click="copyLink">{{getInviteLink()}}</button>
         <span class="tooltiptext" id="myTooltip">Copy to clipboard</span>
       </span>
     </div>
@@ -22,13 +22,15 @@ export default {
     getInviteLink() {
       return `${window.origin}/${this.session_guid}`;
     },
-    copyLink() {
+    copyLink(event) {
       const textArea = document.createElement('textarea');
       textArea.value = this.getInviteLink();
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
       textArea.remove();
+      // Selecting the textarea took the focus: give it back to the button.
+      event.currentTarget.focus();
     }
   },
   mounted() {
@@ -87,12 +89,27 @@ footer {
   border-color: #334155 transparent transparent transparent;
 }
 
-.tooltip:hover .tooltiptext {
+.tooltip:hover .tooltiptext,
+.tooltip:focus-within .tooltiptext {
   visibility: visible;
   opacity: 1;
 }
 
+/* A button that keeps the look of the inline link: the global button styles are reset. */
 #invite-link {
+  min-width: unset;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
   cursor: pointer;
   color: var(--color-primary-dark);
   font-weight: 600;
