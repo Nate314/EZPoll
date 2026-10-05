@@ -34,7 +34,7 @@ Several projects default to host port 8080, so two of them cannot run at once wi
 What it does:
 
 1. If no `.env` exists it creates one (with a header comment saying it was generated). An existing `.env` is never overwritten: only the port variables (`CLIENT_PORT`, `SOCKET_PORT`, `API_PORT`, `MYSQL_PORT`, `PHPMYADMIN_PORT`) are added or adjusted, and every other line and comment is kept.
-2. For each port it starts at the default (or the value already in `.env`) and picks the first port that is free on this machine, scanning upward. A port counts as busy if anything, Docker or a native process, accepts a TCP connection on 127.0.0.1 (the PowerShell launcher also tries to bind it). Ports already picked in the same run are skipped.
+2. For each port it starts at the default (or the value already in `.env`) and picks the first port that is free on this machine, scanning upward. A port counts as busy if anything, Docker or a native process, accepts a TCP connection on 127.0.0.1. Ports already picked in the same run are skipped.
 3. If this project's stack is already running it leaves the ports alone and does not rebuild (rebuild with `./run.sh up --build -d`). If it is stopped, the ports in `.env` are re-checked and only busy ones are reassigned, so starting a second and third project back to back just works.
 4. Runs `docker compose up --build -d` and prints the URLs using the ports it chose, for example `EZPoll client: http://localhost:8081`.
 
@@ -45,6 +45,8 @@ The browser-visible origins follow the chosen ports. The client reaches the sock
 Plain `docker compose up --build` still works exactly as before with the 8080 defaults (fine for a single project). `docker compose` has no pre-run hook, so only the launcher generates `.env`.
 
 To pin ports by hand, edit `.env` (see `.env.example`). To start over, run `./run.sh down` and delete `.env`; the next launcher run picks ports again. The launcher needs `docker compose` v2 and, on macOS and Linux, bash; it uses only POSIX tools (`sed`, `awk`, `grep`).
+
+`run.sh` and `run.ps1` are vendored copies of the shared launcher in [compose-launcher](https://github.com/Nate314/compose-launcher), at the commit recorded in `run.version`. Do not edit them here: fix the launcher there and sync it. This project's ports, defaults and printed URLs live in `run.conf`.
 
 ## Configuration (environment variables)
 

@@ -1,75 +1,115 @@
 # Picks free host ports into .env (created on first run), then runs docker compose.
 #   .\run.ps1            docker compose up --build -d, then print the URLs
 #   .\run.ps1 <args>     docker compose <args> (for example: .\run.ps1 down)
-param([Parameter(ValueFromRemainingArguments = $true)][string[]]$ComposeArgs)
+# Vendored from https://github.com/Nate314/compose-launcher. Do not edit this copy:
+# the per-project settings live in run.conf next to this file.
+# No param() block on purpose: $args keeps compose flags such as -d intact.
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
-# Host port variables and their preferred defaults.
-$Ports = [ordered]@{ CLIENT_PORT = 8080; SOCKET_PORT = 3000; API_PORT = 5000; MYSQL_PORT = 3307; PHPMYADMIN_PORT = 8083 }
+$ConfFile = Join-Path $PSScriptRoot 'run.conf'
+$EnvFile = Join-Path $PSScriptRoot '.env'
+$Utf8NoBom = New-Object Text.UTF8Encoding $false
+$PortPattern = '^[1-9][0-9]*$'  # a positive decimal number without leading zeros
+$Ports = [ordered]@{}  # variable name to default port, in run.conf order
+$Urls = @()            # url lines with {VAR} placeholders
+$Notes = @()           # note lines: "KEY|KEY text"
 
-function Show-Urls {
-    Write-Host "EZPoll client: http://localhost:$(Get-PortOf CLIENT_PORT)"
-    Write-Host "phpMyAdmin:    http://localhost:$(Get-PortOf PHPMYADMIN_PORT)"
-    Write-Host "Socket.io:     http://localhost:$(Get-PortOf SOCKET_PORT)  (used by the client)"
-    Write-Host "Python API:    http://127.0.0.1:$(Get-PortOf API_PORT)  (needs the internal secret header)"
-    Write-Host "MySQL:         127.0.0.1:$(Get-PortOf MYSQL_PORT)"
+function Stop-Launcher([string]$Message) {
+    [Console]::Error.WriteLine("run.ps1: $Message")
+    exit 1
 }
 
-# ---- generic part (identical in every repo) ----
-$EnvFile = Join-Path $PSScriptRoot '.env'
+function Read-Config {
+    if (-not (Test-Path $ConfFile)) { Stop-Launcher 'run.conf not found next to run.ps1' }
+    foreach ($line in [IO.File]::ReadAllLines($ConfFile)) {
+        $kind, $rest = $line.Trim() -split '\s+', 2
+        $rest = "$rest"
+        switch -Regex -CaseSensitive ($kind) {
+            '^(#.*)?$' { break }
+            '^port$' {
+                $var, $default = $rest -split '\s+'
+                if ($var -notmatch '^[A-Za-z0-9_]+$') { Stop-Launcher "run.conf: bad port variable name: $rest" }
+                if ("$default" -notmatch $PortPattern) { Stop-Launcher "run.conf: bad default port: $rest" }
+                $Ports[$var] = $default
+                break
+            }
+            '^url$' { $script:Urls += $rest; break }
+            '^note$' {
+                if (($rest -split '\s+')[0] -notmatch '^[A-Za-z0-9_|]+$') { Stop-Launcher "run.conf: bad note keys: $rest" }
+                $script:Notes += $rest
+                break
+            }
+            default { Stop-Launcher "run.conf: unknown line: $kind $rest" }
+        }
+    }
+    if ($Ports.Count -eq 0) { Stop-Launcher 'run.conf: no port lines' }
+}
 
+# Busy means something accepts a TCP connection on 127.0.0.1 (run.sh uses the same rule).
 function Test-PortBusy([int]$Port) {
     $client = New-Object Net.Sockets.TcpClient
     try {
         $wait = $client.BeginConnect('127.0.0.1', $Port, $null, $null)
-        if ($wait.AsyncWaitHandle.WaitOne(500) -and $client.Connected) { return $true }
-    } catch { } finally { $client.Close() }
-    try {
-        $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Any, $Port)
-        $listener.Start(); $listener.Stop()
-        return $false
-    } catch { return $true }
+        return ($wait.AsyncWaitHandle.WaitOne(500) -and $client.Connected)
+    } catch { return $false } finally { $client.Close() }
 }
 
-function Get-EnvLines { if (Test-Path $EnvFile) { [IO.File]::ReadAllLines($EnvFile) } else { @() } }
+function Get-EnvText { if (Test-Path $EnvFile) { [IO.File]::ReadAllText($EnvFile) } else { '' } }
 
 function Get-EnvValue([string]$Key) {
-    $hit = Get-EnvLines | Where-Object { $_ -like "$Key=*" } | Select-Object -Last 1
-    if ($hit) { $hit.Substring($Key.Length + 1).Trim() } else { '' }
+    $hit = [regex]::Matches((Get-EnvText), "(?m)^$Key=([^\r\n]*)") | Select-Object -Last 1
+    if ($hit) { $hit.Groups[1].Value } else { '' }
 }
 
+# Changes only the lines of this key (or appends one): every other byte of .env is kept.
 function Set-EnvValue([string]$Key, [string]$Value) {
-    $lines = @(Get-EnvLines)
-    $found = $false
-    $out = foreach ($line in $lines) {
-        if ($line -like "$Key=*") { $found = $true; "$Key=$Value" } else { $line }
+    $text = Get-EnvText
+    $pattern = "(?m)^$Key=[^\n]*"
+    if ($text -cmatch $pattern) {
+        $text = [regex]::Replace($text, $pattern, "$Key=$Value")
+    } else {
+        if ($text -and -not $text.EndsWith("`n")) { $text += "`n" }
+        $text += "$Key=$Value`n"
     }
-    if (-not $found) { $out = @($lines) + "$Key=$Value" }
-    [IO.File]::WriteAllText($EnvFile, ((@($out) -join "`n") + "`n"), (New-Object Text.UTF8Encoding $false))
+    [IO.File]::WriteAllText($EnvFile, $text, $Utf8NoBom)
 }
 
 function Get-PortOf([string]$Key) {
     $v = Get-EnvValue $Key
-    if ($v) { $v } else { $Ports[$Key] }
+    if ($v -match $PortPattern) { $v } else { $Ports[$Key] }
 }
 
 function Select-Ports {
     if (-not (Test-Path $EnvFile)) {
-        [IO.File]::WriteAllText($EnvFile, "# Generated by run.ps1: host ports chosen because the defaults were busy or to avoid`n# clashes with other stacks. Edit to pin ports, or delete this file to pick again.`n", (New-Object Text.UTF8Encoding $false))
+        [IO.File]::WriteAllText($EnvFile, "# Generated by run.ps1: host ports chosen because the defaults were busy or to avoid`n# clashes with other stacks. Edit to pin ports, or delete this file to pick again.`n", $Utf8NoBom)
     }
     $picked = @()
-    foreach ($var in $Ports.Keys) {
-        $port = 0
-        if (-not [int]::TryParse((Get-EnvValue $var), [ref]$port) -or $port -lt 1) { $port = $Ports[$var] }
+    foreach ($var in @($Ports.Keys)) {
+        $port = [int](Get-PortOf $var)
         $start = $port
         while ($picked -contains $port -or (Test-PortBusy $port)) { $port++ }
         $picked += $port
         if ($port -ne $start) { Write-Host "${var}: port $start is busy, using $port" }
-        if ((Get-EnvValue $var) -ne "$port") { Set-EnvValue $var "$port" }
+        if ((Get-EnvValue $var) -cne "$port") { Set-EnvValue $var "$port" }
     }
 }
 
+function Show-Notes {
+    foreach ($note in $Notes) {
+        $keys, $text = $note -split '\s+', 2
+        if ((Get-EnvText) -cmatch "(?m)^($keys)=") { Write-Host $text }
+    }
+}
+
+function Show-Urls {
+    foreach ($url in $Urls) {
+        foreach ($var in $Ports.Keys) { $url = $url.Replace("{$var}", (Get-PortOf $var)) }
+        Write-Host $url
+    }
+}
+
+Read-Config
 $build = @('--build')
 if (docker compose ps --status running -q) {
     Write-Host 'Stack already running: leaving ports unchanged and skipping the rebuild.'
@@ -77,13 +117,11 @@ if (docker compose ps --status running -q) {
     $build = @()
 } else {
     Select-Ports
-    if (Get-EnvLines | Where-Object { $_ -match '^(ALLOWED_ORIGINS|PUBLIC_SOCKET_URL)=' }) {
-        Write-Host 'Note: .env sets ALLOWED_ORIGINS or PUBLIC_SOCKET_URL explicitly. They must match the ports above.'
-    }
+    Show-Notes
 }
 
-if ($ComposeArgs) {
-    docker compose @ComposeArgs
+if ($args.Count -gt 0) {
+    docker compose @args
     exit $LASTEXITCODE
 }
 docker compose up @build -d

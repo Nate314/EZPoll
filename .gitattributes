@@ -2,3 +2,5 @@
 *.envsh text eol=lf
 *.template text eol=lf
 *.ps1 text eol=lf
+run.conf text eol=lf
+run.version text eol=lf
