@@ -128,7 +128,6 @@ Tags: `@smoke` (fast core checks), `@security`, `@a11y`, `@responsive`. Every te
 Notes for people extending the suite:
 
 - The socket server limits creating users and sessions to 20 per minute per address, and all browser contexts share one address. Most tests therefore create users and sessions through the API and only seed them into `sessionStorage`; tests that make the app create them through the UI reserve a slot first (`e2e/support/rateBudget.ts`), which is coordinated across workers.
-- `a nested unknown path ends on /home` is marked `test.fail()` because of a known bug (see the pull request): `config.json` is fetched with a relative URL, so a path with two or more segments never mounts the app. The test turns red once that is fixed, which is the cue to remove `test.fail()`.
 - The accessibility scan (`@axe-core/playwright`) fails only on critical violations and attaches everything else it finds to the test report.
 
 ### Running the e2e tests in Docker

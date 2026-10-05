@@ -51,15 +51,13 @@ test.describe('home page and navigation', () => {
     });
   }
 
-  // config.json is fetched with a relative URL, so on a nested path such as
-  // /a/b the request resolves to /a/config.json, nginx answers with index.html
-  // and the app never mounts. test.fail() keeps the suite green while the bug
-  // exists and turns red once it is fixed, which is the cue to remove it.
-  test('a nested unknown path ends on /home (known bug: blank page)', async ({ newActor }) => {
-    test.fail();
-    const actor = await newActor({ allowConsoleErrors: true });
+  // config.json must be fetched with an absolute URL: a relative one resolves
+  // to /some/unknown/config.json here, which nginx answers with index.html.
+  test('a nested unknown path ends on /home', async ({ newActor }) => {
+    const actor = await newActor();
     await actor.goto('/some/unknown/page');
-    await expect(actor.page).toHaveURL(/\/home$/, { timeout: 5_000 });
+    await expect(actor.page).toHaveURL(/\/home$/, { timeout: 10_000 });
+    await expect(actor.page.getByRole('button', { name: 'New Poll' })).toBeVisible();
   });
 
   test('a well formed invite link for a session that does not exist ends on /home', async ({ newActor }) => {
