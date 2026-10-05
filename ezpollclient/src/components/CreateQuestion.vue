@@ -4,7 +4,7 @@
             <h1 class="card-title">Choose a Question Type</h1>
             <div class="option-list">
                 <div v-for="question in questionTypes" :key="question.QuestionGUID">
-                    <button v-on:click="questionSelected(question)">{{question.Description}}</button>
+                    <button :disabled="!userIsReady" v-on:click="questionSelected(question)">{{question.Description}}</button>
                 </div>
             </div>
         </div>
@@ -13,12 +13,14 @@
 
 <script>
 import * as ezpollapi from '../services/ezpoll.service';
+import { userReady } from '../services/user.service';
 
 export default {
   name: 'CreateQuestion',
   data() {
       return {
-          questionTypes: []
+          questionTypes: [],
+          userIsReady: false
       }
   },
   methods: {
@@ -43,6 +45,8 @@ export default {
   },
   mounted() {
       ezpollapi.getAllQuestions(response => this.questionTypes = response);
+      // The user is created (or a stale one replaced) asynchronously at startup.
+      userReady().then(() => this.userIsReady = true);
   }
 }
 </script>
