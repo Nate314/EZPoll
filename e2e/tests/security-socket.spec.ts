@@ -50,7 +50,7 @@ test.describe('@security socket.io origin handling', () => {
       const socket = client({ origin: clientOrigin, transport });
       await connected(socket);
       const list = await emitAck(socket, 'question', 'all');
-      expect(list.map((q: any) => q.Description).slice(0, 5)).toEqual(['EMPTY', 'Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci']);
+      expect(list.map((q: any) => q.Description).slice(0, 4)).toEqual(['Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci']);
     }
   });
 
@@ -146,7 +146,7 @@ test.describe('@security socket.io identity and authorization', () => {
     expect(await emitAck(socket, 'session', 'new', 42)).toEqual({ error: 'Invalid request' });
     expect(await emitAck(socket, 'session', 'new', { user_guid: INJECTION })).toEqual({ error: 'Invalid request' });
     // Still healthy, and the data is intact.
-    expect(await emitAck(socket, 'question', 'all')).toHaveLength(5);
+    expect(await emitAck(socket, 'question', 'all')).toHaveLength(4);
     expect((await emitAck(socket, 'user', user)).UserGUID).toBe(user);
   });
 
@@ -179,6 +179,6 @@ test.describe('@security socket.io identity and authorization', () => {
     const replies = await Promise.all(Array.from({ length: 90 }, () => emitAck(flooder, 'question', 'all')));
     expect(replies.filter(r => r && r.error === 'Too many requests').length).toBeGreaterThan(0);
     expect(replies.filter(r => Array.isArray(r)).length).toBeLessThanOrEqual(60);
-    expect(await emitAck(bystander, 'question', 'all')).toHaveLength(5);
+    expect(await emitAck(bystander, 'question', 'all')).toHaveLength(4);
   });
 });

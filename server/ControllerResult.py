@@ -61,7 +61,7 @@ class ControllerResult(Resource):
             return result_guid if self.update_result(new_result) else False, StatusCodes.OK
 
     # remove the given user's result row (if any) for the session's current
-    # question, then return refreshed stats. Used when a user's socket
+    # question, then return refreshed stats (or the revealed results). Used when a user's socket
     # disconnects (e.g. they closed their tab) so the participant/answer
     # counts shown to everyone still in the session reflect who's actually
     # still around. Only the socket server (X-Internal-Secret) can reach this.
@@ -70,12 +70,11 @@ class ControllerResult(Resource):
         user_guid = guid_field(json_body(), 'user_guid')
         require_user(user_guid)
         session = require_session(session_guid)
-        question_guid = session['QuestionGUID']
-        self.DB.delete('Result', 'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
-            [session_guid, question_guid, user_guid])
-        result = self.get_stats(session_guid, question_guid)
-        result['question_guid'] = question_guid
-        return result, StatusCodes.OK
+        # Revealed results are final: someone leaving afterwards does not change them.
+        if session['ShowResults'] != '1':
+            self.DB.delete('Result', 'SessionGUID = %s AND QuestionGUID = %s AND UserGUID = %s',
+                [session_guid, session['QuestionGUID'], user_guid])
+        return self.get(session_guid)
 
     def answer_belongs_to_question(self, answer_guid, question_guid):
         return self.DB.select(['AnswerGUID'], 'Answer', 'AnswerGUID = %s AND QuestionGUID = %s',

@@ -112,6 +112,17 @@ io.on('connection', socket => {
         return emitStatsAndAck(ack, session_guid, resp);
     });
 
+    // A user stops counting as a participant (the host can opt out of their
+    // own poll): drop their result row and broadcast the refreshed counts.
+    handle('leave', async (session_guid, body, ack) => {
+        if (!ezpoll.isGuid(session_guid) || !isPlainObject(body) || !bindUser(body.user_guid)) {
+            return ack({ error: 'Invalid request' });
+        }
+        const resp = await ezpoll.deleteResult(session_guid, body.user_guid);
+        if (!(resp && resp.error)) io.to(session_guid).emit('stats', resp);
+        ack(resp);
+    });
+
     // A closed tab fires a disconnect. Remove this user's result row for the
     // session they were in and broadcast the refreshed participant counts.
     socket.on('disconnect', async () => {

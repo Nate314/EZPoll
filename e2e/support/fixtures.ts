@@ -5,12 +5,11 @@ import { config } from './config';
 import { Monitor } from './monitor';
 import { takeCreationSlots } from './rateBudget';
 
-export const QUESTION_NAMES = ['EMPTY', 'Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci'] as const;
+export const QUESTION_NAMES = ['Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci'] as const;
 export type QuestionName = typeof QUESTION_NAMES[number];
 
 /** Answer labels the seed data defines for each question type, in order. */
 export const ANSWERS: Record<QuestionName, string[]> = {
-  EMPTY: ['Yes'],
   'Yes/No': ['Yes', 'No'],
   'Yes/No/Maybe': ['Yes', 'No', 'Maybe'],
   'Star Rating': ['0', '1', '2', '3', '4', '5'],

@@ -18,8 +18,13 @@ class ControllerQuestion(Resource):
             return self.get_question_list(), StatusCodes.OK
         return self.get_question_with_answers(guid_param(question_guid)), StatusCodes.OK
 
+    # The seeded "EMPTY" question only backs the default placeholder session
+    # (see db/scripts/dml.sql); it is not a question type users can choose.
+    PLACEHOLDER_QUESTION_GUID = '57d1d126-ae22-44c8-8459-2d72b745ef37'
+
     def get_question_list(self):
-        return self.DB.select(['QuestionGUID', 'Description'], 'Question', order_by = ['SortOrder', 'QuestionGUID']).toJSON()
+        return self.DB.select(['QuestionGUID', 'Description'], 'Question', 'QuestionGUID <> %s',
+            [self.PLACEHOLDER_QUESTION_GUID], order_by = ['SortOrder', 'QuestionGUID']).toJSON()
 
     def get_question_with_answers(self, questionGUID):
         question = require_question(questionGUID)
