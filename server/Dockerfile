@@ -1,10 +1,10 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Pull in OS security fixes released after the base image was built.
-RUN apt-get update && apt-get -y upgrade && rm -rf /var/lib/apt/lists/*
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && (python -m pip uninstall -y pip setuptools wheel || true)
 
 # Unprivileged runtime user
-RUN useradd --system --no-create-home --uid 10001 ezpoll
+RUN adduser -S -D -H -u 10001 ezpoll
 COPY --chown=ezpoll:ezpoll . .
 USER ezpoll
 
