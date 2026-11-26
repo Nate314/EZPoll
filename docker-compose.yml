@@ -88,8 +88,16 @@ services:
             PMA_HOST: mysql-db
             PMA_PORT: 3306
             PMA_ARBITRARY: 0
+        # Run Apache as www-data instead of root. Binding port 80 without root
+        # is allowed by lowering the unprivileged port floor in this
+        # container's own network namespace only.
+        user: www-data
+        sysctls:
+            net.ipv4.ip_unprivileged_port_start: 80
         depends_on:
             mysql-db:
                 condition: service_healthy
         security_opt:
             - no-new-privileges:true
+        cap_drop:
+            - ALL

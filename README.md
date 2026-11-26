@@ -74,7 +74,7 @@ The order of questions and answers comes from the `SortOrder` column on the `Que
 - A socket is bound to a single user GUID; the host-only actions (next question, reveal) are checked server-side against the session's `HostGUID`. Answers must belong to the session's current question.
 - GUIDs are bearer secrets: anyone who has a session GUID can join that session (that is the invite link), and anyone who has a user GUID can act as that user. There are no accounts.
 - Basic abuse limits live in the socket server (per-socket event rate, per-address limits on creating users and sessions). They are in memory and per process; a reverse proxy rate limit is the proper next step if this is exposed publicly.
-- Containers: client (nginx-unprivileged), socket server (`node`) and API (uid 10001) run as non-root with `no-new-privileges` and all capabilities dropped. MySQL runs `mysqld` as the `mysql` user. phpMyAdmin (Apache) is not run as non-root.
+- Containers: client (nginx-unprivileged), socket server (`node`) and API (uid 10001) run as non-root with `no-new-privileges` and all capabilities dropped. MySQL runs `mysqld` as the `mysql` user. phpMyAdmin runs Apache as `www-data` with all capabilities dropped (a container-only sysctl lets it bind port 80). The API image is Alpine based, which had no known OS findings in a Trivy scan, unlike the Debian slim image.
 - `.env` is git ignored. Never commit real secrets.
 
 ## Development
