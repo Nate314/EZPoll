@@ -7,11 +7,15 @@
       <div class="option-list" v-if="!(info && info.results)">
         <div v-for="(answer, index) in answers" :key="answer.AnswerGUID">
           <button class="my-button" :class="{ 'btnselected': index == selected_index }"
-            v-on:click="answerSelected(answer)">{{answer.Description}}</button>
+            :disabled="enable_host_btns && !participating" v-on:click="answerSelected(answer)">{{answer.Description}}</button>
         </div>
       </div>
-      <div class="status-block" v-if="info && info.participant_count">
+      <div class="status-block" v-if="info && !info.results">
         <h2>{{info.answers_count}} / {{info.participant_count}} participants have answered . . .</h2>
+        <label class="host-participates" v-if="enable_host_btns">
+          <input type="checkbox" v-model="participating" v-on:change="participationChanged">
+          Count me as a participant
+        </label>
         <button v-if="enable_host_btns" v-on:click="showResults">Show Results</button>
       </div>
       <div class="results-block" v-if="info && info.results">
@@ -43,6 +47,8 @@ export default {
       answers: [],
       selected_index: null,
       result_guid: null,
+      // Host only: whether the host counts as a participant (kept per tab).
+      participating: sessionStorage.getItem('host_participates') !== '0',
       info: null
     };
   },
@@ -52,6 +58,12 @@ export default {
       return this.info && this.info.responses > 0 ? 100 * count / this.info.responses : 0;
     },
     answerSelected: function(answer) {
+      if (this.enable_host_btns && !this.participating) {
+        this.selected_index = null;
+        this.result_guid = null;
+        ezpollapi.leaveSession(this.session_guid, sessionStorage.getItem('user_guid'));
+        return;
+      }
       this.answers.forEach((x, i) => {
         x['Chosen'] = false;
         if (x.AnswerGUID === answer.AnswerGUID) {
@@ -64,6 +76,12 @@ export default {
         this.result_guid, response => {
           this.result_guid = response;
       });
+    },
+    participationChanged: function() {
+      sessionStorage.setItem('host_participates', this.participating ? '1' : '0');
+      this.selected_index = null;
+      this.result_guid = null;
+      this.answerSelected({});
     },
     showResults: function() {
       ezpollapi.postShowResults(this.session_guid, sessionStorage.getItem('user_guid'), this.question.QuestionGUID);
@@ -136,6 +154,21 @@ export default {
 }
 .status-block {
   margin-top: var(--space-md);
+}
+.host-participates {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-muted);
+}
+/* undo the global text-input sizing in App.vue */
+.host-participates input {
+  width: auto;
+  height: auto;
+  margin: 0;
+  box-shadow: none;
 }
 .results-block {
   display: flex;

@@ -74,6 +74,7 @@ export class Actor {
   status(): Locator { return this.page.locator('.status-block h2'); }
   showResultsButton(): Locator { return this.page.getByRole('button', { name: 'Show Results' }); }
   nextQuestionButton(): Locator { return this.page.getByRole('button', { name: 'NextQuestion' }); }
+  participatesCheckbox(): Locator { return this.page.getByRole('checkbox', { name: 'Count me as a participant' }); }
 
   async waitForQuestion() {
     await expect(this.page).toHaveURL(/\/question$/, { timeout: 20_000 });

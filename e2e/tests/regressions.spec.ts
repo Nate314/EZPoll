@@ -29,35 +29,76 @@ test.describe('zero responses (NaN% regression)', () => {
   });
 });
 
-test.describe('EMPTY question (null GUID sentinel regression)', () => {
-  test('@smoke answering EMPTY increments the answered count', async ({ createPoll }) => {
-    const poll = await createPoll('EMPTY');
+test.describe('the host chooses whether to count as a participant (#55)', () => {
+  test('@smoke by default the host counts; opting out removes the host from counts and results', async ({ createPoll }) => {
+    const poll = await createPoll('Yes/No');
+    await expect(poll.host.participatesCheckbox()).toBeChecked();
+    await poll.host.answer('No');
     const participant = await poll.join();
-    await poll.host.expectCounts(0, 2);
+    await expect(participant.participatesCheckbox()).toHaveCount(0);
     await participant.answer('Yes');
-    await poll.host.expectCounts(1, 2);
-    await participant.expectCounts(1, 2);
-  });
+    await poll.host.expectCounts(2, 2);
 
-  test('EMPTY results count the answer and show 100%', async ({ createPoll }) => {
-    const poll = await createPoll('EMPTY');
-    const [a, b] = [await poll.join(), await poll.join()];
-    await a.answer('Yes');
-    await b.answer('Yes');
-    await poll.host.expectCounts(2, 3);
-    await poll.host.showResults();
-    await poll.host.expectResults([['Yes', 2]]);
-    await a.expectResults([['Yes', 2]]);
-  });
-
-  test('the host answering EMPTY counts too', async ({ createPoll }) => {
-    const poll = await createPoll('EMPTY');
-    await poll.host.answer('Yes');
+    await poll.host.participatesCheckbox().uncheck();
     await poll.host.expectCounts(1, 1);
+    await participant.expectCounts(1, 1);
+    await expect(poll.host.answerButtons().first()).toBeDisabled();
+    await expect(poll.host.page.locator('.btnselected')).toHaveCount(0);
+
+    await poll.host.showResults();
+    await poll.host.expectResults([['Yes', 1], ['No', 0]]);
+    await participant.expectResults([['Yes', 1], ['No', 0]]);
+  });
+
+  test('a host who opted out with nobody else in the poll sees 0 / 0 and can still reveal', async ({ createPoll }) => {
+    const poll = await createPoll('Yes/No');
+    await poll.host.participatesCheckbox().uncheck();
+    await poll.host.expectCounts(0, 0);
+    await poll.host.showResults();
+    await poll.host.expectResults([['Yes', 0], ['No', 0]]);
+  });
+
+  test('the choice is kept on reload and for the next question, and opting back in counts the host again', async ({ createPoll }) => {
+    const poll = await createPoll('Yes/No');
+    const participant = await poll.join();
+    await poll.host.participatesCheckbox().uncheck();
+    await participant.expectCounts(0, 1);
+
+    await poll.host.page.reload();
+    await poll.host.waitForQuestion();
+    await expect(poll.host.participatesCheckbox()).not.toBeChecked();
+    await participant.expectCounts(0, 1);
+
+    await poll.host.showResults();
+    await poll.host.nextQuestion('Star Rating');
+    await expect(participant.heading()).toHaveText('Star Rating ?');
+    await participant.expectCounts(0, 1);
+    await poll.host.expectCounts(0, 1);
+
+    await poll.host.participatesCheckbox().check();
+    await participant.expectCounts(0, 2);
+    await poll.host.answer('5');
+    await participant.answer('3');
+    await participant.expectCounts(2, 2);
+    await poll.host.showResults();
+    await participant.expectResults([['0', 0], ['1', 0], ['2', 0], ['3', 1], ['4', 0], ['5', 1]]);
   });
 });
 
 test.describe('participant count follows socket disconnects', () => {
+  test('closing a participant page after the reveal leaves the revealed results as they were', async ({ createPoll }) => {
+    const poll = await createPoll('Yes/No');
+    const [a, b] = [await poll.join(), await poll.join()];
+    await a.answer('Yes');
+    await b.answer('No');
+    await poll.host.showResults();
+    await b.expectResults([['Yes', 1], ['No', 1]]);
+    await a.page.close();
+    await b.page.waitForTimeout(1000);
+    await poll.host.expectResults([['Yes', 1], ['No', 1]]);
+    await b.expectResults([['Yes', 1], ['No', 1]]);
+  });
+
   test('@smoke closing a participant page lowers the host count', async ({ createPoll }) => {
     const poll = await createPoll('Yes/No');
     const participant = await poll.join();

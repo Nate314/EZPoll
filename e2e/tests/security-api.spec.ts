@@ -189,7 +189,7 @@ test.describe('@security API input validation', () => {
       await api.ctx.post('/api/session/new', { data: { user_guid: payload, question_guid: payload } });
     }
     const types = await api.questionTypes();
-    expect(types.slice(0, 5).map(t => t.Description)).toEqual(['EMPTY', 'Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci']);
+    expect(types.slice(0, 4).map(t => t.Description)).toEqual(['Yes/No', 'Yes/No/Maybe', 'Star Rating', 'Fibonacci']);
 
     const host = await api.newUser();
     const guest = await api.newUser();

@@ -75,7 +75,7 @@ for (const scheme of THEMES) {
     test(`question type list has no overflow or overlap`, async ({ newActor }) => {
       const actor = await newActor({ colorScheme: scheme, viewport: MOBILE });
       await actor.goto('/createquestion');
-      await expect(actor.questionTypeButtons()).toHaveCount(5);
+      await expect(actor.questionTypeButtons()).toHaveCount(4);
       await expectCleanLayout(actor.page, MOBILE.width);
     });
 

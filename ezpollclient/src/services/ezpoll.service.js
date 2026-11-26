@@ -77,3 +77,7 @@ export function postResult(session_guid, user_guid, answer_guid, result_guid, ca
     };
     getSocket().emit('result', session_guid, body, safeCallback(callback));
 }
+
+export function leaveSession(session_guid, user_guid, callback) {
+    getSocket().emit('leave', session_guid, { user_guid: user_guid }, safeCallback(callback));
+}

@@ -8,6 +8,8 @@ test.describe('question types', () => {
     expect((await actor.questionTypeButtons().allInnerTexts()).map(x => x.trim())).toEqual([...QUESTION_NAMES]);
     const fromApi = (await api.questionTypes()).map(q => q.Description);
     expect(fromApi.slice(0, QUESTION_NAMES.length)).toEqual([...QUESTION_NAMES]);
+    // The seeded EMPTY placeholder backs the default session only and is never offered (#55).
+    expect(fromApi).not.toContain('EMPTY');
   });
 
   for (const type of QUESTION_NAMES) {
@@ -26,12 +28,12 @@ test.describe('question types', () => {
   }
 
   test('the placeholder None answer never shows as a choice or a result', async ({ createPoll }) => {
-    const poll = await createPoll('EMPTY');
+    const poll = await createPoll('Yes/No');
     const participant = await poll.join();
-    await expect(participant.answerButtons()).toHaveText(['Yes']);
+    await expect(participant.answerButtons()).toHaveText(['Yes', 'No']);
     await poll.host.showResults();
-    await poll.host.expectResults([['Yes', 0]]);
+    await poll.host.expectResults([['Yes', 0], ['No', 0]]);
     await expect(poll.host.page.getByText('None', { exact: true })).toHaveCount(0);
-    await expect(participant.resultRows()).toHaveCount(1);
+    await expect(participant.resultRows()).toHaveCount(2);
   });
 });

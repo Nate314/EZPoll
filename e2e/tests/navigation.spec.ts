@@ -20,7 +20,7 @@ test.describe('home page and navigation', () => {
     await actor.page.getByRole('button', { name: 'New Poll' }).click();
     await expect(actor.page).toHaveURL(/\/createquestion$/);
     await expect(actor.page.getByRole('heading', { name: 'Choose a Question Type' })).toBeVisible();
-    await expect(actor.questionTypeButtons()).toHaveCount(5);
+    await expect(actor.questionTypeButtons()).toHaveCount(4);
   });
 
   test('the root path shows a loading indicator, creates a user and lands on /home', async ({ newActor }) => {
@@ -84,7 +84,7 @@ test.describe('home page and navigation', () => {
   test('deep link /createquestion with a known user lists the question types', async ({ newActor }) => {
     const actor = await newActor();
     await actor.goto('/createquestion');
-    await expect(actor.questionTypeButtons()).toHaveCount(5);
+    await expect(actor.questionTypeButtons()).toHaveCount(4);
   });
 
   for (const identity of ['none', 'stale'] as const) {
@@ -123,9 +123,9 @@ test.describe('home page and navigation', () => {
     const actor = await newActor();
     await actor.openHome();
     await actor.page.getByRole('button', { name: 'New Poll' }).click();
-    await expect(actor.questionTypeButtons()).toHaveCount(5);
+    await expect(actor.questionTypeButtons()).toHaveCount(4);
     await actor.page.reload();
-    await expect(actor.questionTypeButtons()).toHaveCount(5);
+    await expect(actor.questionTypeButtons()).toHaveCount(4);
   });
 
   test('a stale user_guid in sessionStorage is replaced by a user the server knows', async ({ newActor, api }) => {
