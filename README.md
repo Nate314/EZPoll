@@ -63,7 +63,7 @@ Set these in a `.env` file next to `docker-compose.yml` (see `.env.example`).
 
 Generate real secrets with e.g. `openssl rand -hex 32`. The passwords are inserted into SQL by `db/initializeDB.sh` at first start, so changing them later requires `docker compose down -v` (or altering the user manually).
 
-`./run.sh` and `.un.ps1` fill a new `.env` with random values for `MYSQL_ROOT_PASSWORD`, `EZPOLL_DB_PASSWORD` and `INTERNAL_API_SECRET` (the `secret` lines in `run.conf`). The two database passwords are skipped while the `mysql-data` volume exists, because MySQL keeps the passwords it was initialised with: the launcher prints a note and the stack keeps using them. To get new ones, run `./run.sh down -v` and delete `.env` before the next run.
+`./run.sh` and `.\run.ps1` fill a new `.env` with random values for `MYSQL_ROOT_PASSWORD`, `EZPOLL_DB_PASSWORD` and `INTERNAL_API_SECRET` (the `secret` lines in `run.conf`). The two database passwords are skipped while the `mysql-data` volume exists, because MySQL keeps the passwords it was initialised with: the launcher prints a note and the stack falls back to the compose defaults. Keep `.env` as long as you keep the volume: if its generated passwords are lost, the app can no longer log in to MySQL. To get new ones, run `./run.sh down -v` and delete `.env` before the next run.
 
 ## Answer and question order
 
