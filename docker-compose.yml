@@ -63,6 +63,7 @@ services:
         working_dir: /docker-entrypoint-initdb.d
         volumes:
             - ./db:/docker-entrypoint-initdb.d:ro
+            - mysql-data:/var/lib/mysql
         environment:
             # root is only reachable from inside this container (image default is '%').
             MYSQL_ROOT_HOST: localhost
@@ -101,3 +102,6 @@ services:
             - no-new-privileges:true
         cap_drop:
             - ALL
+
+volumes:
+    mysql-data:
